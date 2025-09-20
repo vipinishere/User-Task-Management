@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="w-full h-full flex flex-col items-center justify-center gap-10">
+        <h1 class="text-4xl text-">Welcome to User-Task-Management System</h1>
+        <form class="w-96 h-60 flex flex-col items-center justify-center gap-5" action="/" method="post">
+            <label for="role" class="text-2xl text-bold">who u are?</label>
+            <select id="role" class="w-30 text-xl p-2 bg-zinc-700 border border-gray-500 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="selectedRole">
+                <option class="bg-zinc-700 text-while" value="ceo">CEO</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
+            <br>
+            <button class="w-72 h-10 bg-yellow-700 rounded text-2xl text-bold p-5 mt-5 cursor-pointer">Submit</button>
+        </form>
+    </div>
+</body>
+</html>

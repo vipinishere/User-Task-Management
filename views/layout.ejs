@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .content-area::-webkit-scrollbar {
+        width: 8px;
+      }
+      .content-area::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      .content-area::-webkit-scrollbar-thumb {
+        background-color: #94a3b8;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <!-- Top Navbar -->
+    <nav
+      class="bg-white p-4 fixed w-full z-10 top-0 shadow-md flex justify-between items-center"
+    >
+      <div class="flex items-center space-x-4">
+        <img
+          src="<%= user.profileImage %>"
+          alt="Profile"
+          class="w-10 h-10 rounded-full border-2 border-gray-300"
+        />
+        <span class="text-lg font-semibold text-gray-800 hidden sm:block"
+          ><%= user.name %> (<%= user.role %>)</span
+        >
+        <a href="/logout" class="text-red-500 hover:text-red-700 ml-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-6 h-6 inline-block align-middle"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9.75l-3 3m0 0l3 3m-3-3h12a.75.75 0 000-1.5H9"
+            />
+          </svg>
+          <span class="hidden md:inline">Logout</span>
+        </a>
+      </div>
+      <!-- Right side: Toggle buttons for side navbar (omitted for brevity) -->
+    </nav>
+
+    <!-- Main Container -->
+    <div class="flex h-screen pt-16">
+      <!-- Side Navbar -->
+      <aside
+        class="bg-gray-800 text-gray-200 w-64 fixed h-full overflow-y-auto z-10 shadow-lg"
+      >
+        <div class="p-4 mt-2">
+          <h2 class="text-xl font-bold mb-4">Navigation</h2>
+          
+          <% if (user.role === 'ceo') { %> 
+          <%- include('partials/ceo-menu.ejs') %>
+          <% } else if (user.role === 'admin') { %> 
+          <%- include('partials/admin-menu.ejs') %> 
+          <% } else { %> 
+          <%- include('partials/user-menu.ejs') %> 
+          <% } %>
+        </div>
+      </aside>
+
+      <!-- Main Content Area (Scrollable) -->
+      <main class="flex-grow ml-64 p-8 overflow-y-auto content-area">
+        <%- body %>
+      </main>
+    </div>
+  </body>
+</html>
