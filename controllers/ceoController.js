@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const ceoModel = require("../models/ceoModel");
-const hashPass = require("../utils/hashPass");
+const hashPass = require("../utils/bcrypt");
 const userModel = require("../models/userModel");
 
 const ceoCreateHandler = async (req, res) => {

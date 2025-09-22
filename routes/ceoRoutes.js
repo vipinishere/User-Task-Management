@@ -6,7 +6,7 @@ const {
   showProfile,
 } = require("../controllers/ceoController");
 const ceoModel = require("./../models/ceoModel");
-const hashPass = require("../utils/hashPass");
+const hashPass = require("../utils/bcrypt");
 const { authorizeCeo } = require("../middlewares/ceoMiddleware");
 
 const router = express.Router();

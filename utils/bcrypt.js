@@ -10,4 +10,15 @@ const hashPass = async (pass) => {
   }
 };
 
-module.exports = hashPass;
+const comparePass = async (givenPass, storedPass) => {
+    try {
+      return result = await bcrypt.compare(givenPass, storedPass);
+    } catch (err) {
+      return err;
+    }
+}
+
+module.exports = {
+  hashPass,
+  comparePass
+};
