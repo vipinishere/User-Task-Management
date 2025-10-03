@@ -1,10 +1,32 @@
 <div class="w-full">
-    <h1 class="text-2xl">All Tasks</h1>
+  <h1 class="text-2xl">All Tasks</h1>
 
-    <div class="w-96 h-30 bg-zinc-400 ">
+  <div
+    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 bg-gray-50 max-h-screen"
+  >
+    <!-- Task Card -->
+    <% tasks.forEach(ele => { %>
+    <div
+      class="<%= ele.priority === "high" ? 'bg-red-200 border-red-500' : "" %> <%= ele.priority === "medium" ? 'bg-yellow-200, border-yellow-500' : "" %> <%= ele.priority === "low" ? 'bg-green-200 border-green-500' : "" %> shadow-md rounded-2xl p-4 border hover:shadow-lg transition"
+    >
+      <h2 class="text-lg font-semibold text-gray-800">
+        Title: <%= ele.title %>
+      </h2>
+      <p class="text-sm text-gray-600 mt-2">
+        Discription: <%= ele.discription %>
+      </p>
 
-        <h2 class="text-while "></h2>
-        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odit labore doloribus beatae?</p>
+      <div class="mt-3 flex flex-col gap-1 text-sm">
+        <p><span class="font-semibold">Priority:</span><%= ele.priority %></p>
+        <p><span class="font-semibold">Status:</span><%= ele.status %></p>
+        <p>
+          <span class="font-semibold">Created By:</span><%= ele.createdBy %>
+        </p>
+      </div>
     </div>
+    <% }) %>
+
+  </div>
+
 
 </div>

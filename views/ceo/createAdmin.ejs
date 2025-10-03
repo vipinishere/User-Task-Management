@@ -1,0 +1,89 @@
+<div class="flex justify-center items-center mix-h-screen bg-gray-100">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+      Create User
+    </h2>
+
+    <form action="/ceo/create-admin" method="post" class="space-y-5">
+      <!-- Name -->
+      <div>
+        <label for="name" class="block text-sm font-medium text-gray-700"
+          >Full Name</label
+        >
+        <input
+          type="text"
+          id="name"
+          name="name"
+          class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        />
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700"
+          >Email</label
+        >
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        />
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700"
+          >Password</label
+        >
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        />
+      </div>
+
+      <!-- Role -->
+      <div>
+        <label for="role" class="block text-sm font-medium text-gray-700"
+          >Role</label
+        >
+        <select
+          id="role"
+          name="role"
+          required
+          class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        >
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <div class="pt-4">
+        <button
+          type="submit"
+          class="w-full rounded-xl bg-indigo-600 px-4 py-3 text-white font-semibold shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        >
+          Create User
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<% if (success) { %>
+  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
+    <div class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm">
+      <h2 class="text-xl font-bold text-green-600">✅ Success</h2>
+      <p class="text-gray-700 mt-2"><%= success %></p>
+      <button onclick="this.parentElement.parentElement.remove()" 
+        class="mt-4 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">
+        Close
+      </button>
+    </div>
+  </div>
+<% } %>
+

@@ -1,27 +1,26 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const ceoModel = require("../models/ceoModel");
 
-const protect = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      req.user = await User.findById(decoded.id).select("-password");
-      next();
-    } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token failed" });
-    }
+const authCeo = async (req, res, next) => {
+  console.log("function authceo");
+  if(req.path === "/create") {
+    return next();
   }
 
+  const token = req.cookies.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      const user = await ceoModel.findById(decoded._doc._id).select("-password");
+      req.user = user;
+      next();
+    } catch (error) {
+      return res.redirect("/ceo/login")
+    }
+  }
   if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
+    return res.redirect("/ceo/login");
   }
 };
 
-module.exports = { protect };
+module.exports = { authCeo };

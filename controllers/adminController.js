@@ -43,8 +43,17 @@ const postLoginPageHandler = async (req, res) => {
   }
 }
 
+const getAllUser = async(req, res) => {
+  // jwt token phle hi varify ho jayegi
+
+  // database call jayegi jisse user show honge
+
+}
+
+
 
 module.exports = {
     getLoginPageHandler,
-    postLoginPageHandler
+    postLoginPageHandler,
+    getAllUser
 }

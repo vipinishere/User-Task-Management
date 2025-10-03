@@ -1,33 +1,40 @@
 const express = require("express");
 const {
-  ceoLoginHandler,
   getAllAdmin,
   ceoCreateHandler,
-  showProfile,
+  getCreateAdmin,
+  postCreateAdmin,
+  getAllUser,
+  getSingleUser,
+  ceoLogoutHandler,
+  getCeoDashboard,
+  getAllTask,
 } = require("../controllers/ceoController");
 const ceoModel = require("./../models/ceoModel");
 const hashPass = require("../utils/bcrypt");
-const { authorizeCeo } = require("../middlewares/ceoMiddleware");
-
+const { authCeo } = require("../middlewares/authMiddleware");
+const userModel = require("../models/userModel");
+const taskModel = require("../models/taskModel");
 const router = express.Router();
 
-router.get("/login", (req, res) => {
-  res.render("login", {layout: false, who: "CEO", title: "CEO | Login"});
-});
+router.use(authCeo);
+
+router.get("/", getCeoDashboard);
 
 router.post("/create", ceoCreateHandler);
 
-router.post("/login", ceoLoginHandler);
+// router.route("/login").get(getCeoLoginHandler).post(ceoLoginHandler)
 
-// router.get("/profile", showProfile);
-router.get("/profile", async(req,res)=> {
-  const user = {
-    name: "vipin",
-    role: "ceo"
-  }
-  res.render("./ceo/dashboard", {user, title: "CEO | Profile"})
-})
+router.get("/logout", ceoLogoutHandler);
+
+router.route("/create-admin").get(getCreateAdmin).post(postCreateAdmin);
 
 router.get("/admins", getAllAdmin);
+
+router.route("/users").get(getAllUser);
+
+router.route("/user/:id").get(getSingleUser);
+
+router.route("/tasks").get(getAllTask);
 
 module.exports = router;

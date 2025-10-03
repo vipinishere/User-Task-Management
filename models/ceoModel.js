@@ -18,6 +18,10 @@ const ceoSchema = new mongoose.Schema({
     trim: true,
     required: true,
   },
+  role: {
+    type: String,
+    default: "ceo"
+  }
 });
 
 module.exports = mongoose.model("CEO", ceoSchema);

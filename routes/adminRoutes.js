@@ -27,5 +27,7 @@ router.get("/profile",(req, res) => {
   res.render("./admin/dashboard",{user, title: "Admin | Profile"});
 });
 
+router.route("/tasks")
+
 
 module.exports = router

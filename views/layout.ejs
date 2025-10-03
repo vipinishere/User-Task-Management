@@ -25,14 +25,14 @@
     >
       <div class="flex items-center space-x-4">
         <img
-          src="<%= user.profileImage %>"
+          src=""
           alt="Profile"
           class="w-10 h-10 rounded-full border-2 border-gray-300"
         />
         <span class="text-lg font-semibold text-gray-800 hidden sm:block"
-          ><%= user.name %> (<%= user.role %>)</span
+          ><%= user.fullName %> (<%= user.role %>)</span
         >
-        <a href="/logout" class="text-red-500 hover:text-red-700 ml-4">
+        <a href="/<%= user.role %>/logout" class="text-red-500 hover:text-red-700 ml-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -57,7 +57,7 @@
     <div class="flex h-screen pt-16">
       <!-- Side Navbar -->
       <aside
-        class="bg-gray-800 text-gray-200 w-64 fixed h-full overflow-y-auto z-10 shadow-lg"
+        class="bg-gray-800 text-gray-200 w-64 fixed h-full overflow-y-auto z-5 shadow-lg"
       >
         <div class="p-4 mt-2">
           <h2 class="text-xl font-bold mb-4">Navigation</h2>
@@ -73,9 +73,11 @@
       </aside>
 
       <!-- Main Content Area (Scrollable) -->
-      <main class="flex-grow ml-64 p-8 overflow-y-auto content-area">
+      <main class="flex-grow ml-64 p-4 overflow-y-auto content-area">
         <%- body %>
       </main>
     </div>
+
+    <script src="./js/index.js"></script>
   </body>
 </html>
