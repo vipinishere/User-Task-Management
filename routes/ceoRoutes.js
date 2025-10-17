@@ -10,11 +10,7 @@ const {
   getCeoDashboard,
   getAllTask,
 } = require("../controllers/ceoController");
-const ceoModel = require("./../models/ceoModel");
-const hashPass = require("../utils/bcrypt");
 const { authCeo } = require("../middlewares/authMiddleware");
-const userModel = require("../models/userModel");
-const taskModel = require("../models/taskModel");
 const router = express.Router();
 
 router.use(authCeo);

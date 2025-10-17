@@ -3,7 +3,6 @@ const taskModel = require("../models/taskModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
-const cloudinary = require("../config/cloudinary");
 
 // User Controllers
 
@@ -215,13 +214,10 @@ const postUserTaskById = async (req, res, next) => {
     return res.status(404).send("Task not found");
   }
 
-  const file = req.files?.attachment;
-
   try {
-    if (file) {
-      const result = await cloudinary.uploader.upload(file.tempFilePath, {
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "user-task-management",
-        filename_override: `${task.title}_${file.name}`,
       });
 
       if (result) {
