@@ -3,7 +3,7 @@ async function searchUser() {
   const name = document.getElementById("userInput").value;
   if (name.length < 2) return; // min 2 letters
 
-  const res = await fetch(`/users/search?name=${name}`);
+  const res = await fetch(`/user/search?name=${name}`);
   const users = await res.json();
 
   let list = document.getElementById("userList");

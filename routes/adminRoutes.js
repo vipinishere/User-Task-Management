@@ -1,33 +1,41 @@
-const express = require("express")
-const router = express()
+const express = require("express");
+const multer = require("multer");
+const path = require("node:path");
+const router = express();
 
-// import user model
-const userModel = require("../models/userModel")
-
-// utility functions
-const hashPass = require("../utils/bcrypt")
-
-// controller functions
-const { 
-  getLoginPageHandler,
-  postLoginPageHandler 
-} = require("../controllers/adminController")
-
-
-router.route("/login")
-    .get(getLoginPageHandler)
-    .post(postLoginPageHandler)
-    
-
-router.get("/profile",(req, res) => {
-  const user = {
-    name : "admin-name",
-    role: "admin"
-  }
-  res.render("./admin/dashboard",{user, title: "Admin | Profile"});
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../uploads"));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix);
+  },
 });
 
-router.route("/tasks")
+const upload = multer({ storage: storage });
 
+// controller functions
+const {
+  getLogoutHandler,
+  getAdminDashboard,
+  getAllUsers,
+  getAllTasks,
+  getCreateTaskHandler,
+  postCreateTaskHandler,
+} = require("../controllers/adminController");
 
-module.exports = router
+const { authAdmin } = require("../middlewares/authMiddleware");
+
+router.use(authAdmin);
+
+router.route("/").get(getAdminDashboard);
+
+router.route("/users").get(getAllUsers);
+router.route("/logout").get(getLogoutHandler);
+router.route("/tasks").get(getAllTasks);
+
+router.get("/create-task", getCreateTaskHandler);
+router.post("/create-task", upload.single("attachment"), postCreateTaskHandler);
+
+module.exports = router;

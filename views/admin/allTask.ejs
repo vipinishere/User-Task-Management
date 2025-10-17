@@ -1,0 +1,71 @@
+<div class="container mx-auto p-6">
+  <h1 class="text-2xl font-bold mb-6">All Tasks</h1>
+  <div class="h-12 flex items-center justify-between">
+    <button class="bg-blue-600 text-white p-2 rounded" onclick="window.location.href='/admin/create-task'">
+      create task
+    </button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% if (isTaskAvailable) { %>
+      <% tasks.forEach(task => { %>
+        <div class="bg-white rounded-2xl shadow p-4 border">
+          <h2 class="text-xl font-semibold mb-2"><%= task.title %></h2>
+          <p class="text-gray-600 mb-3"><%= task.description || "No description" %></p>
+          
+          <div class="mb-2">
+            <span class="text-sm font-semibold">Status:</span>
+            <span class="px-2 py-1 rounded text-white 
+              <%= task.status === "completed" ? "bg-green-500" : 
+                  task.status === "in-progress" ? "bg-yellow-500" : "bg-gray-400" %>">
+              <%= task.status %>
+            </span>
+          </div>
+
+          <div class="mb-2">
+            <span class="text-sm font-semibold">Priority:</span>
+            <%= task.priority %>
+          </div>
+
+          <% if (task.deadline) { %>
+          <div class="mb-2">
+            <span class="text-sm font-semibold">Deadline:</span>
+            <%= task.deadline.toDateString() %>
+          </div>
+          <% } %>
+
+          <% if (task.assignedTo) { %>
+          <div class="mb-2">
+            <span class="text-sm font-semibold">Assigned To:</span>
+            <%= task.assignedTo.name || task.assignedTo.email %>
+          </div>
+          <% } %>
+
+          <% if (task.attachments && task.attachments.length > 0) { %>
+          <div class="mb-2">
+            <span class="text-sm font-semibold">Attachments:</span>
+            <ul class="list-disc list-inside text-blue-600">
+              <% task.attachments.forEach(file => { %>
+                <li><a href="<%= file.fileUrl %>" target="_blank"><%= file.fileName %></a></li>
+              <% }) %>
+            </ul>
+          </div>
+          <% } %>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <h2 class="text-gray-600 text-lg">No tasks found.</h2>
+    <% } %>
+  </div>
+</div>
+
+<% if (!isTaskAvailable) { %>
+  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
+    <div class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm">
+      <h2 class="text-xl font-bold text-green-600">No Task Available</h2>
+      <button onclick="this.parentElement.parentElement.remove()" 
+        class="mt-4 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">
+        Close
+      </button>
+    </div>
+  </div>
+<% } %>

@@ -6,34 +6,47 @@ const {
     postLoginPageHandler,
     getRegisterPageHandler,
     postRegisterPageHandler,
+    getUserTaskById,
+    postUserTaskById,
 
 } = require("../controllers/userController");
 const userModel = require("../models/userModel");
 
 const router = express.Router();
 
-router.route("/register")
-    .get(getRegisterPageHandler)
-    .post(postRegisterPageHandler);
 
-router.route("/login")
-    .get(getLoginPageHandler)
-    .post(postLoginPageHandler);
+router.use(require("../middlewares/authMiddleware").authUser);
 
-router.route("/profile")
+
+router.route("/")
     .get(getUserProfile);
 
-router.route("/all-tasks")
+
+
+router.route("/tasks")
     .get(getUserAllTasks);
 
+
+router.route("/task/:id")
+    .get(getUserTaskById)
+    .post(postUserTaskById);
+
+
+router.route("/logout")
+    .get((req, res) => {
+        res.clearCookie("token");
+        return res.redirect("/user/login");
+    });
+
 router.route("/search")
-.get(async(req, res, next)=> {
+.get(async(req, res)=> {
     const {name} = req.query;
     const users = await userModel.find({
-        name: new RegExp(name, "i")
-    }).limit(5);
-
+        name: new RegExp(name, "i"),
+        role: "user"
+    }).select("-password -createdAt -updatedAt").limit(5);
     return res.json(users);
 })
+
 
 module.exports = router;

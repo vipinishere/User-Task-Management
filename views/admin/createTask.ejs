@@ -5,9 +5,8 @@
       <p class="text-sm text-slate-500 mb-6">
         Fill in the details to create a new task.
       </p>
-
       <form
-        action="/tasks/create"
+        action="/admin/create-task"
         method="POST"
         enctype="multipart/form-data"
         class="space-y-6"
@@ -37,6 +36,7 @@
           <textarea
             id="description"
             name="description"
+            required
             rows="4"
             class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           ></textarea>
@@ -53,6 +53,7 @@
             <select
               id="status"
               name="status"
+              required
               class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none"
             >
               <option value="pending">Pending</option>
@@ -71,6 +72,7 @@
             <select
               id="priority"
               name="priority"
+              required
               class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none"
             >
               <option value="low">Low</option>
@@ -90,6 +92,7 @@
               id="deadline"
               name="deadline"
               type="date"
+              required
               class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none"
             />
           </div>
@@ -103,14 +106,15 @@
             >Attachments</label
           >
           <input
-            id="attachments"
-            name="attachments"
+            id="attachment"
+            name="attachment"
             type="file"
-            multiple
+            accept="image/*"
+            required
             class="block w-full text-sm text-slate-600"
           />
           <p class="text-xs text-slate-400 mt-1">
-            You can attach multiple files. (optional)
+            You can attach a single file. (optional)
           </p>
         </div>
 
@@ -119,9 +123,11 @@
           <label>Assign To (User):</label>
           <input
             type="text"
+            class="w-full border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
             id="userInput"
             onkeyup="searchUser()"
             autocomplete="off"
+            required
           />
           <input type="hidden" name="assignedTo" id="userId" />
           <ul id="userList"></ul>
@@ -131,13 +137,15 @@
         <input
           type="hidden"
           name="createdBy"
-          value="<%= (user && user._id) ? user._id : '' %>"
+          value="<%= user.id ? user.id : null %>"
         />
 
         <!-- Submit -->
         <div class="pt-3 border-t border-slate-100"></div>
         <div class="flex items-center justify-between">
-          <a href="/tasks" class="text-sm text-indigo-600 hover:underline"
+          <a
+            href="/<%= user.role %>/tasks"
+            class="text-sm text-indigo-600 hover:underline"
             >← Back to tasks</a
           >
 

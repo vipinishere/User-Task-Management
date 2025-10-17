@@ -1,38 +1,75 @@
+require("dotenv").config();
 const express = require("express");
-const cookieParser = require("cookie-parser")
-const dotenv = require("dotenv");
-const connectDB = require("./config/db");
-const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const expressEjsLayouts = require("express-ejs-layouts");
-const { getCeoLoginHandler, ceoLoginHandler } = require("./controllers/ceoController");
+const morgan = require("morgan");
+const cloudinary = require("cloudinary").v2;
+const connectDB = require("./config/db");
 
-
-dotenv.config();
+// Connect to Database
 connectDB();
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Initialize Express App
 const app = express();
 
+// view engine setup
 app.set("view engine", "ejs");
 app.use(expressEjsLayouts);
+
+// Middleware
 app.use(morgan("dev"));
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser())
+app.use(cookieParser());
 
-// Routes
+const {
+  getCeoLoginHandler,
+  ceoLoginHandler,
+} = require("./controllers/ceoController");
+const {
+  getLoginPageHandler,
+  postLoginPageHandler,
+} = require("./controllers/adminController");
+const {
+  getUserLoginHandler,
+  postUserLoginHandler,
+  getUserRegisterHandler,
+  postUserRegisterHandler,
+} = require("./controllers/userController");
+
+// Home Route
 app.use("/", require("./routes/homeRoutes"));
+
+// CEO Routes
 app.get("/ceo/login", getCeoLoginHandler);
 app.post("/ceo/login", ceoLoginHandler);
 app.use("/ceo", require("./routes/ceoRoutes"));
+
+// Admin Routes
+app.get("/admin/login", getLoginPageHandler);
+app.post("/admin/login", postLoginPageHandler);
 app.use("/admin", require("./routes/adminRoutes"));
+
+// User Routes
+app.get("/user/register", getUserRegisterHandler);
+app.post("/user/register", postUserRegisterHandler);
+app.get("/user/login", getUserLoginHandler);
+app.post("/user/login", postUserLoginHandler);
 app.use("/user", require("./routes/userRoutes"));
 
-// Globel Error
+// Global Error
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
   const user = {
-    profileImaga: "kddk",
+    profileImage: "kddk",
     role: "ceo",
   };
 

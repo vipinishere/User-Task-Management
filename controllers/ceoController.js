@@ -87,22 +87,31 @@ const ceoLoginHandler = async (req, res) => {
   /// Check if email or password is missing in the request body
 
   if (!email || !password) {
+    console.log("email or password missing");
     return res.redirect("/ceo/login");
   }
 
   try {
     //GETTING CEO DATA FROM DB USING EMAIL
     const ceo = await ceoModel.findOne({ email });
+    console.log("ceo: ", ceo);
     if (ceo) {
-      // CAMPARING THE GIVEN PASSWORD WITH DB_STORED PASSWORD
+      // CAMPARING THE GIVEN PASSWORD WITH DB_STORED_PASSWORD
       const rs = await bcrypt.compare(password, ceo.password);
-
+      console.log("is match: ", rs);
       if (rs) {
         // GENERATE JWT TOKEN (VALID FOR ONLY 1HOUR)
         try {
-          const token = jwt.sign({ ...ceo }, process.env.JWT_SECRET_KEY, {
+          const payload = {
+            id: ceo._id,
+            email: ceo.email,
+            role: ceo.role,
+          };
+          const token = jwt.sign({ ...payload }, process.env.JWT_SECRET_KEY, {
             expiresIn: "1h",
           });
+
+          console.log("token from ceo controller: ", token);
           // SAVE TOKEN IN CLIENT SIDE
           return res
             .cookie("token", token, { httpOnly: true })
