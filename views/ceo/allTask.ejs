@@ -29,10 +29,19 @@
           </div>
           <% } %>
 
+          <% if (task.createdBy) { %>
+          <div class="mb-2">
+            <span class="text-sm font-semibold">Created By:</span>
+            <%= task.createdBy.name %>
+            (<%= task.createdBy.email %>)
+          </div>
+          <% } %>
+
           <% if (task.assignedTo) { %>
           <div class="mb-2">
             <span class="text-sm font-semibold">Assigned To:</span>
-            <%= task.assignedTo.name || task.assignedTo.email %>
+            <%= task.assignedTo.name %>  
+            (<%= task.assignedTo.email %>)
           </div>
           <% } %>
 

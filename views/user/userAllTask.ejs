@@ -25,7 +25,23 @@
           <span class="font-semibold">Created By: </span><%= ele.createdByName %> (<%= ele.createdByEmail %>)
         </p>
         <p>
-          <span class="font-semibold">Date: </span><%= ele.createdAt.toLocaleString() %>
+          <span class="font-semibold">Created Date: </span><%= ele.createdAt.toLocaleString() %>
+        </p>
+        <p>
+          <span class="font-semibold">Deadline Date: </span><%= ele.
+          deadline.toLocaleString() %>
+        </p>
+        <p>
+          <span class="font-semibold">Attachments: </span>
+          <% if (ele.attachments && ele.attachments.length > 0) { %>
+            <% ele.attachments.forEach(att => { %>
+              <a href="<%= att.fileUrl %>" class="text-blue-500 hover:underline">
+              <%= att.fileName %>
+              </a>
+            <% }) %>
+          <% } else { %>
+            No Attachments
+          <% } %>
         </p>
         <a href="/user/task/<%= ele._id %>" class="text-blue-500 hover:underline">View Details</a>
       </div>

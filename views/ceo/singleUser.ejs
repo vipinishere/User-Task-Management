@@ -1,6 +1,48 @@
-<div class="w-full ">
-    <% if (singleUser) { %>
-     <h1>name: <%= singleUser.name %></h1>
-     <h2>email: <%= singleUser.email %></h2>
-    <% } %>
+<div class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-bold text-gray-800">
+      <%= singleUser.name %>
+      <span class="text-sm text-gray-500">(<%= singleUser.email %>)</span>
+    </h2>
+    <a href="/ceo/users" class="text-blue-500 hover:underline">⬅ Back</a>
+  </div>
+
+  <p class="text-gray-600 mb-4">
+    Role: <span class="capitalize font-medium"><%= singleUser.role %></span>
+  </p>
+
+  <h3 class="text-xl font-semibold mb-2 text-gray-800">
+    Tasks (<%= tasks.length %>)
+  </h3>
+  <div class="border rounded-xl p-4 bg-gray-50 mb-4">
+    <% if (tasks.length === 0) { %>
+    <p class="text-gray-400 text-sm">No tasks found for this user.</p>
+    <% } else { %> <% tasks.forEach(task => { %>
+    <div
+      class="flex justify-between items-center bg-white p-3 mb-2 rounded-lg shadow-sm"
+    >
+      <div>
+        <h4 class="font-semibold text-gray-700"><%= task.title %></h4>
+        <p class="text-xs text-gray-500"><%= task.status %></p>
+      </div>
+      <form
+        action="/ceo/user/<%= singleUser._id %>/task/<%= task._id %>/delete"
+        method="POST"
+        onsubmit="return confirm('Delete this task permanently?')"
+      >
+        <button class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+      </form>
+    </div>
+    <% }) %> <% } %>
+  </div>
+
+  <form
+    action="/ceo/user/<%= singleUser._id %>/delete"
+    method="POST"
+    onsubmit="return confirm('Delete all tasks and remove this user?')"
+  >
+    <button class="bg-red-600 text-white px-5 py-2 rounded-xl hover:bg-red-700">
+      Delete User & All Associated Tasks
+    </button>
+  </form>
 </div>

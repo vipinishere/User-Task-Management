@@ -1,17 +1,22 @@
 <div class="bg-white p-6 rounded-lg shadow-md">
-  <h1 class="text-3xl font-bold text-gray-800 mb-6">CEO Dashboard Overview</h1>
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">User Dashboard Overview</h1>
   <p class="text-gray-600 mb-4">
-    Welcome, <%= user.name %>. This is your primary dashboard where you can see your all tasks
+    Welcome, <%= user.name %>. This is your primary dashboard where you can see
+    your all tasks
   </p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
     <div class="bg-blue-500 text-white p-4 rounded-lg shadow-lg">
       <h2 class="text-xl font-semibold">All Tasks</h2>
-      <p class="text-3xl mt-2">30</p>
+      <p class="text-3xl mt-2"><%= data.totalTasks %></p>
     </div>
     <div class="bg-yellow-500 text-white p-4 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold">Completed Tasks</h2>
+      <p class="text-3xl mt-2"><%= data.completedTasks %></p>
+    </div>
+    <div class="bg-red-500 text-white p-4 rounded-lg shadow-lg">
       <h2 class="text-xl font-semibold">Pending Tasks</h2>
-      <p class="text-3xl mt-2">25</p>
+      <p class="text-3xl mt-2"><%= data.pendingTasks %></p>
     </div>
   </div>
 </div>

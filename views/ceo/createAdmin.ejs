@@ -4,7 +4,7 @@
       Create User
     </h2>
 
-    <form action="/ceo/create-admin" method="post" class="space-y-5">
+    <form action=<% `/ceo/create-${data.roleFor}` %> method="post" class="space-y-5">
       <!-- Name -->
       <div>
         <label for="name" class="block text-sm font-medium text-gray-700"
@@ -55,10 +55,14 @@
           id="role"
           name="role"
           required
+          disabled
           class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
         >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+          <% if (data.roleFor === "admin") { %>
+          <option value="admin" selected>Admin</option>
+          <% } else { %>
+          <option value="user" selected>User</option>
+          <% } %>
         </select>
       </div>
 
@@ -75,15 +79,18 @@
   </div>
 </div>
 <% if (success) { %>
-  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
-    <div class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm">
-      <h2 class="text-xl font-bold text-green-600">✅ Success</h2>
-      <p class="text-gray-700 mt-2"><%= success %></p>
-      <button onclick="this.parentElement.parentElement.remove()" 
-        class="mt-4 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">
-        Close
-      </button>
-    </div>
+<div
+  class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40"
+>
+  <div class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm">
+    <h2 class="text-xl font-bold text-green-600">✅ Success</h2>
+    <p class="text-gray-700 mt-2"><%= success %></p>
+    <button
+      onclick="this.parentElement.parentElement.remove()"
+      class="mt-4 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+    >
+      Close
+    </button>
   </div>
+</div>
 <% } %>
-

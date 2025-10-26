@@ -142,18 +142,36 @@ const postUserLoginHandler = async (req, res) => {
   }
 };
 
-const getUserProfile = (req, res) => {
+const getUserProfile = async (req, res) => {
   const user = req.user;
-  res.render("./user/dashboard", { user, title: "user | Profile" });
+  console.log("user from user's get profile", user);
+  const myAllTasks = await taskModel.find({ assignedTo: user._id });
+  // console.log(myAllTasks);
+  const [completedTasks, pendingTasks] = myAllTasks.reduce(
+    (acc, task) => {
+      if (task.status === "completed") {
+        acc[0].push(task);
+      } else {
+        acc[1].push(task);
+      }
+      return acc;
+    },
+    [[], []]
+  );
+  res.render("./user/dashboard", {
+    user,
+    data: {
+      totalTasks: myAllTasks.length,
+      completedTasks: completedTasks.length,
+      pendingTasks: pendingTasks.length,
+    },
+    title: "user | Profile",
+  });
 };
 
 const getUserAllTasks = async (req, res) => {
   const user = req.user;
-  console.log(user);
-  console.log(user._id);
   const userId = user._id;
-  console.log(userId);
-  console.log(typeof userId);
   const myTasks = await taskModel.aggregate([
     {
       $match: { assignedTo: new mongoose.Types.ObjectId(userId) },
@@ -174,13 +192,15 @@ const getUserAllTasks = async (req, res) => {
         priority: 1,
         status: 1,
         createdAt: 1,
+        deadline: 1,
+        attachments: 1,
         createdByName: "$createdByDetails.name",
         createdByEmail: "$createdByDetails.email",
       },
     },
   ]);
   // const myTasks = await taskModel.find({assignedTo: user._id});
-  console.log(myTasks);
+  console.log("my all tasks", myTasks);
   res.render("./user/userAllTask", {
     tasks: myTasks,
     user,

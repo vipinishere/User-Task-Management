@@ -68,10 +68,6 @@ app.use("/user", require("./routes/userRoutes"));
 // Global Error
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
-  const user = {
-    profileImage: "kddk",
-    role: "ceo",
-  };
 
   if (req.originalUrl.startsWith("/api")) {
     // API request → send JSON
@@ -80,8 +76,8 @@ app.use((err, req, res, next) => {
     // SSR request → render error page
     res.status(500).render("error", {
       title: "error",
-      user,
-      message: "globel error function" || err.message,
+      user: req.user || null,
+      message: "global error function" || err.message,
       url: err.url,
     });
   }

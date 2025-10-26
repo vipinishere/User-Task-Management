@@ -3,12 +3,13 @@ const jwt = require("jsonwebtoken");
 const ceoModel = require("../models/ceoModel");
 const userModel = require("../models/userModel");
 const taskModel = require("../models/taskModel");
+const { default: mongoose } = require("mongoose");
 
 const getCeoDashboard = async (req, res) => {
   const user = req.user;
 
   const allUsers = await userModel.find();
-  const pendingTasks = await taskModel.find({status: "pending"});
+  const pendingTasks = await taskModel.find({ status: "pending" });
   const [totalAdmin, totalUser] = allUsers.reduce(
     (acc, user) => {
       if (user.role === "admin") {
@@ -28,7 +29,7 @@ const getCeoDashboard = async (req, res) => {
     pendingTasks: pendingTasks.length,
     title: "CEO | Profile",
   });
-}
+};
 
 const ceoCreateHandler = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -45,7 +46,7 @@ const ceoCreateHandler = async (req, res) => {
         fullName,
         email,
         password: hashedPass,
-        role: "ceo"
+        role: "ceo",
       });
       if (response) {
         return res.json({
@@ -60,20 +61,32 @@ const ceoCreateHandler = async (req, res) => {
   }
 };
 
-const getCeoLoginHandler = async (req, res) => {
+const getCeoLoginHandler = (req, res) => {
+  // 1. Get Token from Cookies
   const token = req.cookies.token;
-  // console.log(token);
+
   if (token) {
     try {
+      // 2. Token Verification (Synchronous)
       const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      // console.log(decoded._doc.role)
-      if (decoded._doc.role === "ceo") {
-        return res.redirect("/ceo");        
+
+      const user = decoded.user || decoded;
+
+      // 3. Authorization Check
+      if (user && user.role === "ceo") {
+        return res.redirect("/ceo");
       }
     } catch (err) {
-      console.log(err);
+      console.warn(
+        `Attempted login with bad token on /ceo/login. Error: ${err.name}`
+      );
+      res.clearCookie("token");
+      // Execution continues to rendering the login page below.
     }
   }
+
+  // 5. Render Login Page
+  // If no token, token is invalid/expired, or token belongs to a non-CEO user.
   return res.render("login", {
     layout: false,
     who: "CEO",
@@ -82,53 +95,81 @@ const getCeoLoginHandler = async (req, res) => {
 };
 
 const ceoLoginHandler = async (req, res) => {
+  // Helper function for consistent error redirection
+  const redirectToLoginWithError = (message) => {
+    // Encode the error message to safely pass it in the URL
+    return res.redirect(`/ceo/login?error=${encodeURIComponent(message)}`);
+  };
+
   const { email, password } = req.body;
 
-  /// Check if email or password is missing in the request body
-
+  // --- 1. Input Validation ---
   if (!email || !password) {
-    console.log("email or password missing");
-    return res.redirect("/ceo/login");
+    console.error("Attempted CEO login missing credentials.");
+    return redirectToLoginWithError("Email and password are required.");
   }
 
   try {
-    //GETTING CEO DATA FROM DB USING EMAIL
-    const ceo = await ceoModel.findOne({ email });
-    console.log("ceo: ", ceo);
-    if (ceo) {
-      // CAMPARING THE GIVEN PASSWORD WITH DB_STORED_PASSWORD
-      const rs = await bcrypt.compare(password, ceo.password);
-      console.log("is match: ", rs);
-      if (rs) {
-        // GENERATE JWT TOKEN (VALID FOR ONLY 1HOUR)
-        try {
-          const payload = {
-            id: ceo._id,
-            email: ceo.email,
-            role: ceo.role,
-          };
-          const token = jwt.sign({ ...payload }, process.env.JWT_SECRET_KEY, {
-            expiresIn: "1h",
-          });
+    // --- 2. Fetch CEO Data ---
+    const ceo = await ceoModel.findOne({ email }).lean();
+    console.log(ceo);
 
-          console.log("token from ceo controller: ", token);
-          // SAVE TOKEN IN CLIENT SIDE
-          return res
-            .cookie("token", token, { httpOnly: true })
-            .redirect("/ceo");
-        } catch (err) {
-          return res.render("/ceo/login", {
-            layout: false,
-            who: "CEO",
-            title: "CEO | Login",
-          });
-        }
-      } else {
-        return res.redirect("/ceo/login");
-      }
+    if (!ceo) {
+      console.error(`Login attempt failed: CEO not found for email: ${email}`);
+      // Use a generic error message for security reasons
+      return redirectToLoginWithError(
+        "Invalid credentials or account does not exist."
+      );
     }
-  } catch (err) {
-    return res.redirect("/ceo/login");
+
+    // --- 3. Password Comparison ---
+    const isMatch = await bcrypt.compare(password, ceo.password);
+
+    if (!isMatch) {
+      console.error(
+        `Login attempt failed: Password mismatch for user ID: ${ceo._id}`
+      );
+      // Use a generic error message for security reasons
+      return redirectToLoginWithError(
+        "Invalid credentials or account does not exist."
+      );
+    }
+
+    // --- 4. JWT Token Generation and Session Creation ---
+    const payload = {
+      id: ceo._id,
+      fullName: ceo.fullName,
+      email: ceo.email,
+      role: ceo.role,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+      expiresIn: "1h", // Token valid for 1 hour
+    });
+
+    // --- 5. Success: Set Cookie and Redirect ---
+    // Setting the JWT as an HttpOnly cookie for security (prevents XSS access)
+    return res
+      .cookie("token", token, {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === "production", // Use secure in production
+        // sameSite: "Lax", // Recommended for CSRF mitigation
+        maxAge: 60 * 60 * 1000, // 1 hour (matching token expiry)
+      })
+      .redirect("/ceo"); // Redirect to the CEO dashboard
+  } catch (error) {
+    console.error("CEO Login Error:", error);
+
+    // This handles database connection issues, findOne errors, or JWT signing errors
+    // (though JWT signing errors are rare unless the secret key is missing).
+    let errorMessage =
+      "An unexpected server error occurred during login. Please try again.";
+
+    if (!process.env.JWT_SECRET_KEY) {
+      errorMessage = "Server configuration error: JWT secret key is missing.";
+    }
+
+    return redirectToLoginWithError(errorMessage);
   }
 };
 
@@ -140,7 +181,6 @@ const ceoLogoutHandler = async (req, res) => {
   }
   return res.redirect("/ceo/login");
 };
-
 
 const getAllAdmin = async (req, res, next) => {
   try {
@@ -157,9 +197,15 @@ const getAllAdmin = async (req, res, next) => {
 };
 
 const getCreateAdmin = async (req, res) => {
-  res
-    .status(200)
-    .render("./ceo/createAdmin", { title: "abc", user: req.user, success: null });
+  const roleFor = req.originalUrl.includes("create-admin") ? "admin" : "user";
+  return res.status(200).render("./ceo/createAdmin", {
+    title: "Create Admin",
+    user: req.user,
+    data: {
+      roleFor,
+    },
+    success: null,
+  });
 };
 
 const postCreateAdmin = async (req, res, next) => {
@@ -241,50 +287,125 @@ const getAllUser = async (req, res, next) => {
 };
 
 const getSingleUser = async (req, res, next) => {
-  const parameters = req.params;
-  console.log(parameters.id);
-
   try {
-    const singleUser = await userModel.findById(parameters.id);
-    if (!singleUser) {
+    const userId = req.params.id;
+    const user = await userModel.findById(userId).lean();
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // fetch tasks where user is either creator or assigned to
+    const tasks = await taskModel
+      .find({
+        $or: [{ createdBy: userId }, { assignedTo: userId }],
+      })
+      .lean();
+
+    if (!user) {
       return next({ err: "while fatching user data" });
     }
-    console.log(singleUser);
+    console.log(user);
 
     return res.render("./ceo/singleUser", {
+      tasks,
       title: "single user",
       user: req.user,
-      singleUser,
+      singleUser: user,
     });
-  } catch (err) {}
+  } catch (err) {
+    console.error(err);
+    return next({ err: "while fatching user data" });
+  }
 };
 
-const getAllTask = async(req, res, next) => {
+const getAllTask = async (req, res, next) => {
   try {
-    const allTasks = await taskModel.find();
-    console.log(allTasks)
-    
-    if(allTasks[0]) {
+    const allTasks = await taskModel
+      .find({}, "-__v")
+      .populate({ path: "createdBy", select: "-password -__v" })
+      .populate({ path: "assignedTo", select: "-password -__v" });
+    console.log(allTasks);
+
+    if (allTasks[0]) {
       return res.render("./ceo/allTask", {
         title: "all Task",
         user: req.user,
-        tasks : allTasks,
-        isTaskAvailable: true
-      })
-    }
-    else {
+        tasks: allTasks,
+        isTaskAvailable: true,
+      });
+    } else {
       return res.render("./ceo/allTask", {
         title: "all Task",
         user: req.user,
         tasks: null,
         isTaskAvailable: false,
-      })
+      });
     }
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
-}
+};
 
+const deleteSingleTask = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const taskId = req.params.taskId;
+
+    const task = await taskModel.findById(taskId);
+    if (!task) {
+      const errorMsg = "The requested action failed due to validation issues.";
+      res.redirect(`/ceo/user/${userId}?error=${encodeURIComponent(errorMsg)}`);
+    }
+
+    const isdeleted = await task.deleteOne(); // or Task.findByIdAndDelete(id)
+
+    return res.status(200).redirect(`/ceo/user/${userId}`);
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .redirect(`/ceo/user/${userId}?error=${encodeURIComponent(err.message)}`);
+  }
+};
+
+const deleteUserAndTasks = async (req, res, next) => {
+  const userId = req.params.id;
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+    // Delete the user
+    const user = await userModel.findById(userId).session(session);
+
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).redirect(`/ceo/user/${userId}`);
+    }
+
+    // Delete tasks created by or assigned to the user
+    const deleteResult = await taskModel
+      .deleteMany({
+        $or: [{ createdBy: userId }, { assignedTo: userId }],
+      })
+      .session(session);
+
+    await userModel.deleteOne({ _id: userId }).session(session);
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    return res.status(200).redirect("/ceo/users");
+  } catch (err) {
+    await session.abortTransaction().catch(() => {});
+    session.endSession();
+    console.error(err);
+    return res
+      .status(500)
+      .redirect(`/ceo/users?error=${encodeURIComponent(err.message)}`);
+  } finally {
+    await session.endSession();
+  }
+};
 
 module.exports = {
   getCeoDashboard,
@@ -298,4 +419,6 @@ module.exports = {
   getAllTask,
   getSingleUser,
   ceoLogoutHandler,
+  deleteSingleTask,
+  deleteUserAndTasks,
 };
