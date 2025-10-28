@@ -4,7 +4,7 @@
       Create User
     </h2>
 
-    <form action=<% `/ceo/create-${data.roleFor}` %> method="post" class="space-y-5">
+    <form action="/ceo/create-<%=data.roleFor%>" method="post" class="space-y-5">
       <!-- Name -->
       <div>
         <label for="name" class="block text-sm font-medium text-gray-700"
@@ -55,8 +55,7 @@
           id="role"
           name="role"
           required
-          disabled
-          class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          class="mt-1 w-full rounded-xl border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 pointer-events-none"
         >
           <% if (data.roleFor === "admin") { %>
           <option value="admin" selected>Admin</option>

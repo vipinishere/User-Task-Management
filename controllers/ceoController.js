@@ -196,8 +196,9 @@ const getAllAdmin = async (req, res, next) => {
   }
 };
 
-const getCreateAdmin = async (req, res) => {
+const getCreateAdmin = (req, res) => {
   const roleFor = req.originalUrl.includes("create-admin") ? "admin" : "user";
+  console.log(roleFor)
   return res.status(200).render("./ceo/createAdmin", {
     title: "Create Admin",
     user: req.user,
@@ -210,14 +211,16 @@ const getCreateAdmin = async (req, res) => {
 
 const postCreateAdmin = async (req, res, next) => {
   const { name, email, password, role } = req.body;
+  // console.log(req.body)
   const url = req.originalUrl;
+  const roleFor = url.includes("create-admin") ? "admin": "user";
 
   try {
     if (!name || !email || !password || !role) {
       return res.render("error", {
-        title: "",
+        title: "Error",
         user: req.user,
-        message: "Something is missing",
+        message: "input field is missing",
         url: url,
       });
     }
@@ -241,7 +244,7 @@ const postCreateAdmin = async (req, res, next) => {
       return res.render("error", {
         title: "Error",
         user: req.user,
-        message: "something went wrong",
+        message: "hashed password not getting",
         url: url,
       });
     }
@@ -258,8 +261,11 @@ const postCreateAdmin = async (req, res, next) => {
     }
 
     return res.render("./ceo/createAdmin", {
-      title: "abc",
+      title: `CEO || Create ${roleFor}`,
       user: req.user,
+      data: {
+        roleFor
+      },
       success: `${role} Created!`,
     });
   } catch (err) {

@@ -23,9 +23,12 @@ const {
   getAllTasks,
   getCreateTaskHandler,
   postCreateTaskHandler,
+  deleteSingleTask,
+  deleteUserAndTasks,
 } = require("../controllers/adminController");
 
 const { authAdmin } = require("../middlewares/authMiddleware");
+const { getSingleUser } = require("../controllers/ceoController");
 
 router.use(authAdmin);
 
@@ -37,5 +40,9 @@ router.route("/tasks").get(getAllTasks);
 
 router.get("/create-task", getCreateTaskHandler);
 router.post("/create-task", upload.single("attachment"), postCreateTaskHandler);
+
+router.get("/user/:id", getSingleUser);
+router.route("/user/:id/delete").post(deleteUserAndTasks);
+router.route("/user/:id/task/:taskId/delete").post(deleteSingleTask);
 
 module.exports = router;

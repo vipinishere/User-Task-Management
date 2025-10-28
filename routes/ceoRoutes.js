@@ -15,11 +15,11 @@ const {
 const { authCeo } = require("../middlewares/authMiddleware");
 const router = express.Router();
 
+router.post("/create", ceoCreateHandler);
 router.use(authCeo);
 
 router.get("/", getCeoDashboard);
 
-router.post("/create", ceoCreateHandler);
 
 // router.route("/login").get(getCeoLoginHandler).post(ceoLoginHandler)
 

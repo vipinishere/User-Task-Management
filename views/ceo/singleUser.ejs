@@ -4,7 +4,9 @@
       <%= singleUser.name %>
       <span class="text-sm text-gray-500">(<%= singleUser.email %>)</span>
     </h2>
-    <a href="/ceo/users" class="text-blue-500 hover:underline">⬅ Back</a>
+    <a href="/<%= user.role %>/users" class="text-blue-500 hover:underline"
+      >⬅ Back</a
+    >
   </div>
 
   <p class="text-gray-600 mb-4">
@@ -26,7 +28,7 @@
         <p class="text-xs text-gray-500"><%= task.status %></p>
       </div>
       <form
-        action="/ceo/user/<%= singleUser._id %>/task/<%= task._id %>/delete"
+        action="/<%= user.role %>/user/<%= singleUser._id %>/task/<%= task._id %>/delete"
         method="POST"
         onsubmit="return confirm('Delete this task permanently?')"
       >
@@ -37,11 +39,14 @@
   </div>
 
   <form
-    action="/ceo/user/<%= singleUser._id %>/delete"
+    action="/<%=user.role %>/user/<%= singleUser._id %>/delete"
     method="POST"
     onsubmit="return confirm('Delete all tasks and remove this user?')"
   >
-    <button class="bg-red-600 text-white px-5 py-2 rounded-xl hover:bg-red-700">
+    <button
+      type="submit"
+      class="bg-red-600 text-white px-5 py-2 rounded-xl hover:bg-red-700"
+    >
       Delete User & All Associated Tasks
     </button>
   </form>

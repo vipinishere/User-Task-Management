@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
+const mongoose = require("mongoose");
 
 // utility functions
 
@@ -215,6 +216,73 @@ const postCreateTaskHandler = async (req, res, next) => {
   }
 };
 
+const deleteSingleTask = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const taskId = req.params.taskId;
+
+    const task = await taskModel.findById(taskId);
+    if (!task) {
+      const errorMsg = "The requested action failed due to validation issues.";
+      res.redirect(
+        `/admin/user/${userId}?error=${encodeURIComponent(errorMsg)}`
+      );
+    }
+
+    const isdeleted = await task.deleteOne(); // or Task.findByIdAndDelete(id)
+
+    return res.status(200).redirect(`/admin/user/${userId}`);
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .redirect(
+        `/admin/user/${userId}?error=${encodeURIComponent(err.message)}`
+      );
+  }
+};
+
+const deleteUserAndTasks = async (req, res, next) => {
+  const userId = req.params.id;
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+    // Delete the user
+    const user = await userModel.findById(userId).session(session);
+
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).redirect(`/admin/user/${userId}`);
+    }
+
+    // Delete tasks created by or assigned to the user
+    const deleteResult = await taskModel.deleteMany(
+      {
+        $or: [{ createdBy: userId }, { assignedTo: userId }],
+      },
+      { session: session }
+    );
+
+    await userModel.deleteOne({ _id: userId }, { session: session });
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    return res.status(200).redirect("/admin/users");
+  } catch (err) {
+    await session.abortTransaction().catch(() => {});
+    session.endSession();
+    console.error(err);
+    return res
+      .status(500)
+      .redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
+  } finally {
+    await session.endSession();
+  }
+};
+
 const getLogoutHandler = (req, res) => {
   res.clearCookie("token");
   return res.redirect("/admin/login");
@@ -229,4 +297,6 @@ module.exports = {
   getAllTasks,
   getCreateTaskHandler,
   postCreateTaskHandler,
+  deleteSingleTask,
+  deleteUserAndTasks,
 };
