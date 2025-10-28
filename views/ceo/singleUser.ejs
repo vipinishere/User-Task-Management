@@ -30,9 +30,9 @@
       <form
         action="/<%= user.role %>/user/<%= singleUser._id %>/task/<%= task._id %>/delete"
         method="POST"
-        onsubmit="return confirm('Delete this task permanently?')"
+        onsubmit="confirmDelete(event)"
       >
-        <button class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
       </form>
     </div>
     <% }) %> <% } %>
@@ -41,7 +41,7 @@
   <form
     action="/<%=user.role %>/user/<%= singleUser._id %>/delete"
     method="POST"
-    onsubmit="return confirm('Delete all tasks and remove this user?')"
+    onsubmit="confirmDelete(event)"
   >
     <button
       type="submit"

@@ -8,48 +8,50 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     <% if (isTaskAvailable) { %>
       <% tasks.forEach(task => { %>
-        <div class="bg-white rounded-2xl shadow p-4 border">
-          <h2 class="text-xl font-semibold mb-2"><%= task.title %></h2>
-          <p class="text-gray-600 mb-3"><%= task.description || "No description" %></p>
-          
-          <div class="mb-2">
-            <span class="text-sm font-semibold">Status:</span>
-            <span class="px-2 py-1 rounded text-white 
-              <%= task.status === "completed" ? "bg-green-500" : 
-                  task.status === "in-progress" ? "bg-yellow-500" : "bg-gray-400" %>">
-              <%= task.status %>
-            </span>
-          </div>
+          <div class="bg-white rounded-2xl shadow p-4 border">
+            <a href="/<%= user.role %>/task/<%= task._id %>" target="_blank">
+              <h2 class="text-xl font-semibold mb-2"><%= task.title %></h2>
+              <p class="text-gray-600 mb-3"><%= task.description || "No description" %></p>
+              
+              <div class="mb-2">
+                <span class="text-sm font-semibold">Status:</span>
+                <span class="px-2 py-1 rounded text-white 
+                  <%= task.status === "completed" ? "bg-green-500" : 
+                      task.status === "in-progress" ? "bg-yellow-500" : "bg-gray-400" %>">
+                  <%= task.status %>
+                </span>
+              </div>
 
-          <div class="mb-2">
-            <span class="text-sm font-semibold">Priority:</span>
-            <%= task.priority %>
-          </div>
+              <div class="mb-2">
+                <span class="text-sm font-semibold">Priority:</span>
+                <%= task.priority %>
+              </div>
 
-          <% if (task.deadline) { %>
-          <div class="mb-2">
-            <span class="text-sm font-semibold">Deadline:</span>
-            <%= task.deadline.toDateString() %>
-          </div>
-          <% } %>
+              <% if (task.deadline) { %>
+              <div class="mb-2">
+                <span class="text-sm font-semibold">Deadline:</span>
+                <%= task.deadline.toDateString() %>
+              </div>
+              <% } %>
 
-          <% if (task.assignedTo) { %>
-          <div class="mb-2">
-            <span class="text-sm font-semibold">Assigned To:</span>
-            <%= task.assignedTo.name || task.assignedTo.email %>
-          </div>
-          <% } %>
+              <% if (task.assignedTo) { %>
+              <div class="mb-2">
+                <span class="text-sm font-semibold">Assigned To:</span>
+                <%= task.assignedTo.name || task.assignedTo.email %>
+              </div>
+              <% } %>
 
-          <% if (task.attachments && task.attachments.length > 0) { %>
-          <div class="mb-2">
-            <span class="text-sm font-semibold">Attachments:</span>
-            <ul class="list-disc list-inside text-blue-600">
-              <% task.attachments.forEach(file => { %>
-                <li><a href="<%= file.fileUrl %>" target="_blank"><%= file.fileName %></a></li>
-              <% }) %>
-            </ul>
-          </div>
-          <% } %>
+              <% if (task.attachments && task.attachments.length > 0) { %>
+              <div class="mb-2">
+                <span class="text-sm font-semibold">Attachments:</span>
+                <ul class="list-disc list-inside text-blue-600">
+                  <% task.attachments.forEach(file => { %>
+                    <li><a href="<%= file.fileUrl %>" target="_blank"><%= file.fileName %></a></li>
+                  <% }) %>
+                </ul>
+              </div>
+            <% } %>
+          </a>
         </div>
       <% }) %>
     <% } else { %>

@@ -84,6 +84,30 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+const getSingleTask = async (req, res) => {
+  const taskId = req.params.id;
+
+  try {
+    const task = await taskModel.findById(taskId);
+    if (!task) {
+    }
+    return res.status(200).render("./admin/singleTaskPage", {
+      title: "Admin || Task Page",
+      user: req.user,
+      task,
+    });
+  } catch (err) {
+    console.log("GetSingleTask Error: ", err);
+    res
+      .status(500)
+      .redirect(
+        `/admin/tasks?status=error&message=${encodeURIComponent(
+          "something went wrong!"
+        )}`
+      );
+  }
+};
+
 const getAllTasks = async (req, res, next) => {
   const user = req.user;
   // console.log("getAllTasks user:", user);
@@ -144,10 +168,13 @@ const postCreateTaskHandler = async (req, res, next) => {
     !deadline ||
     !createdBy
   ) {
-    return next({
-      message: "All fields are required",
-      url: "/admin/create-task",
-    });
+    res
+      .status(400)
+      .redirect(
+        `/admin/create-task?status=error&message=${encodeURIComponent(
+          "All Fields are Required"
+        )}`
+      );
   }
 
   try {
@@ -178,12 +205,21 @@ const postCreateTaskHandler = async (req, res, next) => {
         });
 
         if (!newtask) {
-          return next({
-            message: "Error in creating task",
-            url: "/admin/create-task",
-          });
+          return res
+            .status(400)
+            .redirect(
+              `/admin/create-task?status=error&message=${encodeURIComponent(
+                "Something went wrong!"
+              )}`
+            );
         }
-        return res.redirect("/admin/tasks");
+        return res
+          .status(200)
+          .redirect(
+            `/admin/tasks?status=success&message=${encodeURIComponent(
+              "Task Created Successfully!"
+            )}`
+          );
       }
     } else {
       const newtask = await taskModel.create({
@@ -197,22 +233,34 @@ const postCreateTaskHandler = async (req, res, next) => {
       });
 
       if (!newtask) {
-        return next({
-          message: "Error in creating task",
-          url: "/admin/create-task",
-        });
+        return res
+          .status(400)
+          .redirect(
+            `/admin/create-task?status=error&message=${encodeURIComponent(
+              "Something went wrong!"
+            )}`
+          );
       }
-      return res.redirect("/admin/tasks");
+      return res
+        .status(200)
+        .redirect(
+          `/admin/tasks?status=success&message=${encodeURIComponent(
+            "Task Created Successfully!"
+          )}`
+        );
     }
   } catch (err) {
-    console.log("error: (postCreateTaskHandler)", err);
+    console.log("PostCreateTaskHandler Error: ", err);
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    return next({
-      message: "error: (postCreateTaskHandler)",
-      url: "/admin/create-task",
-    });
+    return res
+      .status(500)
+      .redirect(
+        `/admin/tasks?status=error&message=${encodeURIComponent(
+          "Internal Server Error!"
+        )}`
+      );
   }
 };
 
@@ -225,19 +273,52 @@ const deleteSingleTask = async (req, res, next) => {
     if (!task) {
       const errorMsg = "The requested action failed due to validation issues.";
       res.redirect(
-        `/admin/user/${userId}?error=${encodeURIComponent(errorMsg)}`
+        `/admin/user/${userId}?status=error&message=${encodeURIComponent(
+          errorMsg
+        )}`
       );
+    }
+
+    if (task.attachments[0]) {
+      const url = task.attachments[0].fileUrl;
+      const parts = url.split("/");
+      console.log("parts: ", parts);
+
+      // parts will be an array of substrings
+
+      // 2. Get the last element of the array (which is "kpsznzghodhbqvixyzsr.png")
+      const filenameWithExtension = parts.pop();
+      console.log("filenamewithextension: ", filenameWithExtension);
+
+      // 3. Remove the ".png" extension
+      const publicId = `user-task-management/${
+        filenameWithExtension.split(".")[0]
+      }`;
+
+      console.log("publicId", publicId);
+
+      const isDone = await cloudinary.uploader.destroy(publicId);
+
+      console.log("isdone: ", isDone);
     }
 
     const isdeleted = await task.deleteOne(); // or Task.findByIdAndDelete(id)
 
-    return res.status(200).redirect(`/admin/user/${userId}`);
+    return res
+      .status(200)
+      .redirect(
+        `/admin/user/${userId}?status=success&message=${encodeURIComponent(
+          "Task Deleted Successfully"
+        )}`
+      );
   } catch (err) {
     console.error(err);
     return res
       .status(500)
       .redirect(
-        `/admin/user/${userId}?error=${encodeURIComponent(err.message)}`
+        `/admin/user/${userId}?status=error&message=${encodeURIComponent(
+          err.message
+        )}`
       );
   }
 };
@@ -254,7 +335,13 @@ const deleteUserAndTasks = async (req, res, next) => {
     if (!user) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).redirect(`/admin/user/${userId}`);
+      return res
+        .status(404)
+        .redirect(
+          `/admin/user/${userId}?status=error&message=${encodeURIComponent(
+            "Something Went Wrong"
+          )}`
+        );
     }
 
     // Delete tasks created by or assigned to the user
@@ -270,14 +357,22 @@ const deleteUserAndTasks = async (req, res, next) => {
     await session.commitTransaction();
     await session.endSession();
 
-    return res.status(200).redirect("/admin/users");
+    return res
+      .status(200)
+      .redirect(
+        `/admin/users?status=success&message=${encodeURIComponent(
+          "User Deleted Successfully!"
+        )}`
+      );
   } catch (err) {
     await session.abortTransaction().catch(() => {});
     session.endSession();
     console.error(err);
     return res
       .status(500)
-      .redirect(`/admin/users?error=${encodeURIComponent(err.message)}`);
+      .redirect(
+        `/admin/users?status=error&message=${encodeURIComponent(err.message)}`
+      );
   } finally {
     await session.endSession();
   }
@@ -294,6 +389,7 @@ module.exports = {
   getAllUsers,
   getLogoutHandler,
   getAdminDashboard,
+  getSingleTask,
   getAllTasks,
   getCreateTaskHandler,
   postCreateTaskHandler,
