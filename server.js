@@ -30,6 +30,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Custom Middleware to track previous and current paths
+app.use((req, res, next) => {
+  res.cookie("previousPath", req.cookies.currentPath || "");
+  res.cookie("currentPath", req.originalUrl);
+  next();
+});
+
 const {
   getCeoLoginHandler,
   ceoLoginHandler,
@@ -87,8 +94,17 @@ app.use((err, req, res, next) => {
 app.all("/*splat", (req, res) => {
   res.render("404", {
     layout: false,
+    goBackUrl: req.cookies.previousPath || "/",
   });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+connectDB()
+  .then(() => {
+    console.log("✅ MongoDB connected successfully!");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+  });

@@ -20,7 +20,6 @@ router.use(authCeo);
 
 router.get("/", getCeoDashboard);
 
-
 // router.route("/login").get(getCeoLoginHandler).post(ceoLoginHandler)
 
 router.get("/logout", ceoLogoutHandler);
