@@ -19,6 +19,7 @@ const upload = multer({ storage: storage });
 const {
   getLogoutHandler,
   getAdminDashboard,
+  getSingleUser,
   getAllUsers,
   getAllTasks,
   getCreateTaskHandler,
@@ -29,7 +30,6 @@ const {
 } = require("../controllers/adminController");
 
 const { authAdmin } = require("../middlewares/authMiddleware");
-const { getSingleUser } = require("../controllers/ceoController");
 
 router.use(authAdmin);
 

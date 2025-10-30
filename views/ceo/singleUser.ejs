@@ -37,7 +37,7 @@
     </div>
     <% }) %> <% } %>
   </div>
-
+<% if (user.role === "ceo") { %>
   <form
     action="/<%=user.role %>/user/<%= singleUser._id %>/delete"
     method="POST"
@@ -50,4 +50,6 @@
       Delete User & All Associated Tasks
     </button>
   </form>
+<% } %>
+  
 </div>

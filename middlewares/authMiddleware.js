@@ -70,7 +70,7 @@ const authAdmin = (req, res, next) => {
       return res.redirect("/admin/login");
     } else {
       req.user = user;
-      console.log("Authenticated user:", user);
+      // console.log("Authenticated user:", user);
       next();
     }
   } catch (err) {
@@ -96,7 +96,7 @@ const authUser = (req, res, next) => {
     return next();
   }
 
-  console.log("checking token in user middleware", token);
+  // console.log("checking token in user middleware", token);
 
   if (!token) {
     console.log("no token found, redirecting to login");

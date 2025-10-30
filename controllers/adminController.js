@@ -67,6 +67,47 @@ const getAdminDashboard = (req, res) => {
   return res.render("./admin/dashboard", { user, title: "Admin | Profile" });
 };
 
+const getSingleUser = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const loggedInUser = req.user;
+    const user = await userModel.findById(userId).lean();
+    console.log(req.user);
+
+    if (!user) {
+      return res
+        .status(404)
+        .redirect("/admin/users?status=error&message=User not found");
+    }
+
+    // fetch tasks where user is either creator or assigned to
+    const tasks = await taskModel
+      .find({
+        $and: [{ createdBy: loggedInUser.id }, { assignedTo: userId }],
+      })
+      .lean();
+
+    console.log("tasks:", tasks);
+
+    // if (!tasks[0]) {
+    //   return res
+    //     .status(404)
+    //     .redirect(`/admin/user/${userId}?status=error&message=Tasks not found`);
+    // }
+    // console.log(user);
+
+    return res.render("./ceo/singleUser", {
+      tasks,
+      title: "single user",
+      user: loggedInUser,
+      singleUser: user,
+    });
+  } catch (err) {
+    console.error(err);
+    return next({ err: "while fatching user data" });
+  }
+};
+
 const getAllUsers = async (req, res, next) => {
   try {
     const users = await userModel.find({ role: "user" }).select("-password");
@@ -282,24 +323,24 @@ const deleteSingleTask = async (req, res, next) => {
     if (task.attachments[0]) {
       const url = task.attachments[0].fileUrl;
       const parts = url.split("/");
-      console.log("parts: ", parts);
+      // console.log("parts: ", parts);
 
       // parts will be an array of substrings
 
       // 2. Get the last element of the array (which is "kpsznzghodhbqvixyzsr.png")
       const filenameWithExtension = parts.pop();
-      console.log("filenamewithextension: ", filenameWithExtension);
+      // console.log("filenamewithextension: ", filenameWithExtension);
 
       // 3. Remove the ".png" extension
       const publicId = `user-task-management/${
         filenameWithExtension.split(".")[0]
       }`;
 
-      console.log("publicId", publicId);
+      // console.log("publicId", publicId);
 
       const isDone = await cloudinary.uploader.destroy(publicId);
 
-      console.log("isdone: ", isDone);
+      // console.log("isdone: ", isDone);
     }
 
     const isdeleted = await task.deleteOne(); // or Task.findByIdAndDelete(id)
@@ -386,6 +427,7 @@ const getLogoutHandler = (req, res) => {
 module.exports = {
   getLoginPageHandler,
   postLoginPageHandler,
+  getSingleUser,
   getAllUsers,
   getLogoutHandler,
   getAdminDashboard,
