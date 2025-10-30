@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 const mongoose = require("mongoose");
+const { imageUrlToPublicId } = require("../utils/imagePublicId.utils");
 
 // utility functions
 
@@ -26,45 +27,74 @@ const postLoginPageHandler = async (req, res) => {
 
   /// Check if email or password is missing in the request body
   if (!email || !password) {
-    return res.redirect("/admin/login");
+    return res
+      .status(400)
+      .redirect("/admin/login?status=error&message=All fields are required");
   }
   try {
     //GETTING ADMIN DATA FROM DB USING EMAIL
     const admin = await userModel.findOne({ email, role: "admin" });
 
-    if (admin) {
-      // CAMPARING THE GIVEN PASSWORD WITH DB_STORED PASSWORD
-      const rs = await bcrypt.compare(password, admin.password);
-
-      if (rs) {
-        // GENERATE JWT TOKEN (VALID FOR ONLY 1HOUR)
-        try {
-          const payload = {
-            id: admin._id,
-            name: admin.name,
-            email: admin.email,
-            role: admin.role,
-          };
-          const token = jwt.sign({ ...payload }, process.env.JWT_SECRET_KEY);
-          // console.log(token);
-          // SAVE TOKEN IN CLIENT SIDE
-          res.cookie("token", token, { httpOnly: true });
-          return res.redirect("/admin");
-        } catch (err) {
-          return res.redirect("/admin/login");
-        }
-      } else {
-        return res.redirect("/admin/login");
-      }
+    if (!admin) {
+      return res
+        .status(500)
+        .redirect("/admin/login?status=error&message=Invalid Credentials");
     }
+    // CAMPARING THE GIVEN PASSWORD WITH DB_STORED PASSWORD
+    const rs = await bcrypt.compare(password, admin.password);
+
+    if (!rs) {
+      return res
+        .status(500)
+        .redirect("/admin/login?status=error&message=Invalid Credentials");
+    }
+
+    // GENERATE JWT TOKEN (VALID FOR ONLY 1HOUR)
+
+    const payload = {
+      id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+    };
+    const token = jwt.sign({ ...payload }, process.env.JWT_SECRET_KEY);
+
+    if (!token) {
+      return res
+        .status(500)
+        .redirect("/admin/login?status=error&message=Could not generate token");
+    }
+    res.cookie("token", token, { httpOnly: true });
+    return res.redirect("/admin?status=success&message=Login Successful");
   } catch (err) {
-    return res.redirect("/admin/login");
+    return res
+      .status(500)
+      .redirect("/admin/login?status=error&message=Something went wrong");
   }
 };
 
 const getAdminDashboard = (req, res) => {
   const user = req.user;
-  return res.render("./admin/dashboard", { user, title: "Admin | Profile" });
+  const totalUsersPromise = userModel.countDocuments({ role: "user" });
+  const totalTasksPromise = taskModel.countDocuments({
+    $and: [{ createdBy: user.id }, { status: "pending" }],
+  });
+  Promise.all([totalUsersPromise, totalTasksPromise])
+    .then(([totalUsers, totalTasks]) => {
+      return res.render("./admin/dashboard", {
+        user,
+        totalUsers,
+        totalTasks,
+        title: "Admin | Profile",
+      });
+    })
+    .catch((err) => {
+      console.error("Error fetching dashboard data:", err);
+      return res.render("./admin/dashboard", {
+        user,
+        title: "Admin | Profile",
+      });
+    });
 };
 
 const getSingleUser = async (req, res, next) => {
@@ -72,7 +102,6 @@ const getSingleUser = async (req, res, next) => {
     const userId = req.params.id;
     const loggedInUser = req.user;
     const user = await userModel.findById(userId).lean();
-    console.log(req.user);
 
     if (!user) {
       return res
@@ -87,15 +116,6 @@ const getSingleUser = async (req, res, next) => {
       })
       .lean();
 
-    console.log("tasks:", tasks);
-
-    // if (!tasks[0]) {
-    //   return res
-    //     .status(404)
-    //     .redirect(`/admin/user/${userId}?status=error&message=Tasks not found`);
-    // }
-    // console.log(user);
-
     return res.render("./ceo/singleUser", {
       tasks,
       title: "single user",
@@ -104,24 +124,23 @@ const getSingleUser = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
-    return next({ err: "while fatching user data" });
+    return res
+      .status(500)
+      .redirect("/admin/users?status=error&message=Server Error");
   }
 };
 
 const getAllUsers = async (req, res, next) => {
   try {
     const users = await userModel.find({ role: "user" }).select("-password");
-    const user = req.user;
     return res.render("./admin/allUser", {
-      user,
+      user: req.user,
       users,
       title: "Admin | All Users",
     });
   } catch (error) {
-    return next({
-      message: "Error in fetching all users",
-      url: "/admin/users",
-    });
+    console.error("Error fetching users:", error);
+    return res.status(500).redirect("/admin?status=error&message=Server Error");
   }
 };
 
@@ -131,6 +150,13 @@ const getSingleTask = async (req, res) => {
   try {
     const task = await taskModel.findById(taskId);
     if (!task) {
+      return res
+        .status(404)
+        .redirect(
+          `/admin/tasks?status=error&message=${encodeURIComponent(
+            "Task not found!"
+          )}`
+        );
     }
     return res.status(200).render("./admin/singleTaskPage", {
       title: "Admin || Task Page",
@@ -139,7 +165,7 @@ const getSingleTask = async (req, res) => {
     });
   } catch (err) {
     console.log("GetSingleTask Error: ", err);
-    res
+    return res
       .status(500)
       .redirect(
         `/admin/tasks?status=error&message=${encodeURIComponent(
@@ -151,7 +177,6 @@ const getSingleTask = async (req, res) => {
 
 const getAllTasks = async (req, res, next) => {
   const user = req.user;
-  // console.log("getAllTasks user:", user);
   try {
     const tasks = await taskModel.find({ createdBy: user.id });
 
@@ -172,10 +197,14 @@ const getAllTasks = async (req, res, next) => {
       });
     }
   } catch (err) {
-    return next({
-      message: "Error in fetching all tasks",
-      url: "/admin/tasks",
-    });
+    console.log("GetAllTasks Error: ", err);
+    return res
+      .status(500)
+      .redirect(
+        `/admin?status=error&message=${encodeURIComponent(
+          "Internal Server Error!"
+        )}`
+      );
   }
 };
 
@@ -197,8 +226,6 @@ const postCreateTaskHandler = async (req, res, next) => {
     assignedTo,
     createdBy,
   } = req.body;
-
-  const user = req.user;
 
   if (
     !title ||
@@ -322,25 +349,10 @@ const deleteSingleTask = async (req, res, next) => {
 
     if (task.attachments[0]) {
       const url = task.attachments[0].fileUrl;
-      const parts = url.split("/");
-      // console.log("parts: ", parts);
 
-      // parts will be an array of substrings
-
-      // 2. Get the last element of the array (which is "kpsznzghodhbqvixyzsr.png")
-      const filenameWithExtension = parts.pop();
-      // console.log("filenamewithextension: ", filenameWithExtension);
-
-      // 3. Remove the ".png" extension
-      const publicId = `user-task-management/${
-        filenameWithExtension.split(".")[0]
-      }`;
-
-      // console.log("publicId", publicId);
+      const publicId = imageUrlToPublicId(url);
 
       const isDone = await cloudinary.uploader.destroy(publicId);
-
-      // console.log("isdone: ", isDone);
     }
 
     const isdeleted = await task.deleteOne(); // or Task.findByIdAndDelete(id)

@@ -182,23 +182,24 @@ const ceoLogoutHandler = async (req, res) => {
   return res.redirect("/ceo/login");
 };
 
-const getAllAdmin = async (req, res, next) => {
+const getAllAdmin = async (req, res) => {
   try {
     let admins = await userModel.find({ role: "admin" });
-    // console.log(admins);
     return res.status(200).render("./ceo/allAdmin", {
       title: "all Admin",
       user: req.user,
       admins,
     });
   } catch (err) {
-    next(err);
+    return res
+      .status(500)
+      .redirect(`/ceo?error=${encodeURIComponent("while fatching admins")}`);
   }
 };
 
 const getCreateAdmin = (req, res) => {
   const roleFor = req.originalUrl.includes("create-admin") ? "admin" : "user";
-  console.log(roleFor)
+  console.log(roleFor);
   return res.status(200).render("./ceo/createAdmin", {
     title: "Create Admin",
     user: req.user,
@@ -209,11 +210,11 @@ const getCreateAdmin = (req, res) => {
   });
 };
 
-const postCreateAdmin = async (req, res, next) => {
+const postCreateAdmin = async (req, res) => {
   const { name, email, password, role } = req.body;
   // console.log(req.body)
   const url = req.originalUrl;
-  const roleFor = url.includes("create-admin") ? "admin": "user";
+  const roleFor = url.includes("create-admin") ? "admin" : "user";
 
   try {
     if (!name || !email || !password || !role) {
@@ -228,12 +229,13 @@ const postCreateAdmin = async (req, res, next) => {
     // check existing user
     const existUser = await userModel.findOne({ email });
     if (existUser) {
-      return res.render("error", {
-        title: "Error",
-        user: req.user,
-        message: "User exits already",
-        url: url,
-      });
+      return res
+        .status(409)
+        .redirect(
+          `/ceo/create-${roleFor}?error=${encodeURIComponent(
+            "User with this email already exists"
+          )}`
+        );
     }
 
     const hashedPass = await bcrypt.hash(password, 10);
@@ -241,12 +243,13 @@ const postCreateAdmin = async (req, res, next) => {
     // console.log("hashed password: ", hashedPass)
 
     if (!hashedPass) {
-      return res.render("error", {
-        title: "Error",
-        user: req.user,
-        message: "hashed password not getting",
-        url: url,
-      });
+      return res
+        .status(500)
+        .redirect(
+          `/ceo/create-${roleFor}?error=${encodeURIComponent(
+            "something went wrong."
+          )}`
+        );
     }
 
     const createdOne = await userModel.create({
@@ -257,29 +260,41 @@ const postCreateAdmin = async (req, res, next) => {
     });
 
     if (!createdOne) {
-      return next({ message: "while creating user", url });
+      return res
+        .status(500)
+        .redirect(
+          `/ceo/create-${roleFor}?error=${encodeURIComponent(
+            "something went wrong."
+          )}`
+        );
     }
 
     return res.render("./ceo/createAdmin", {
       title: `CEO || Create ${roleFor}`,
       user: req.user,
       data: {
-        roleFor
+        roleFor,
       },
       success: `${role} Created!`,
     });
   } catch (err) {
-    console.log(err);
-    return next({ message: "while creating admin", url });
+    console.log("err in creating admin: ", err);
+    return res
+      .status(500)
+      .redirect(
+        `/ceo/create-${roleFor}?error=${encodeURIComponent(
+          "something went wrong."
+        )}`
+      );
   }
 };
 
-const getAllUser = async (req, res, next) => {
+const getAllUser = async (req, res) => {
   try {
     const users = await userModel.find({ role: "user" });
 
     if (!users) {
-      next({ message: "error: while fatching users data" });
+      return res.status(400).redirect("/ceo?error=while fatching users");
     }
 
     return res.render("./ceo/allUser", {
@@ -288,7 +303,8 @@ const getAllUser = async (req, res, next) => {
       users,
     });
   } catch (err) {
-    next({ err: "something went wrong" });
+    console.error("Error in getAllUser:", err);
+    return res.status(500).redirect("/ceo?error=while fatching users");
   }
 };
 
@@ -361,15 +377,26 @@ const deleteSingleTask = async (req, res, next) => {
       const errorMsg = "The requested action failed due to validation issues.";
       res.redirect(`/ceo/user/${userId}?error=${encodeURIComponent(errorMsg)}`);
     }
-
+    if (task.attachments[0].fileUrl) {
+      const publicId = imageUrlToPublicId(task.attachments[0].fileUrl);
+      await cloudinary.uploader.destroy(publicId);
+    }
     const isdeleted = await task.deleteOne(); // or Task.findByIdAndDelete(id)
 
-    return res.status(200).redirect(`/ceo/user/${userId}`);
+    return res
+      .status(200)
+      .redirect(
+        `/ceo/user/${userId}?status=success&message=${encodeURIComponent(
+          "Task deleted successfully"
+        )}  `
+      );
   } catch (err) {
-    console.error(err);
+    console.error(" Error deleting task:", err);
     return res
       .status(500)
-      .redirect(`/ceo/user/${userId}?error=${encodeURIComponent(err.message)}`);
+      .redirect(
+        `/ceo/user/${userId}?error=${encodeURIComponent("while deleting task")}`
+      );
   }
 };
 
@@ -389,7 +416,22 @@ const deleteUserAndTasks = async (req, res, next) => {
     }
 
     // Delete tasks created by or assigned to the user
-    const deleteResult = await taskModel
+
+    const tasks = await taskModel
+      .find({
+        $or: [{ createdBy: userId }, { assignedTo: userId }],
+      })
+      .session(session);
+
+    for (let i = 0; i < tasks.length; i++) {
+      if (tasks[i].attachments[0]) {
+        const url = tasks[i].attachments[0].fileUrl;
+        const publicId = imageUrlToPublicId(url);
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+
+    await taskModel
       .deleteMany({
         $or: [{ createdBy: userId }, { assignedTo: userId }],
       })
@@ -400,14 +442,22 @@ const deleteUserAndTasks = async (req, res, next) => {
     await session.commitTransaction();
     await session.endSession();
 
-    return res.status(200).redirect("/ceo/users");
+    return res
+      .status(200)
+      .redirect(
+        `/ceo/users?status=success&message=${encodeURIComponent(
+          "User and associated tasks deleted successfully"
+        )}`
+      );
   } catch (err) {
     await session.abortTransaction().catch(() => {});
     session.endSession();
     console.error(err);
     return res
       .status(500)
-      .redirect(`/ceo/users?error=${encodeURIComponent(err.message)}`);
+      .redirect(
+        `/ceo/users?error=${encodeURIComponent("Something went wrong")}`
+      );
   } finally {
     await session.endSession();
   }
