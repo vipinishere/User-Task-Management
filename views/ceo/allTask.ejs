@@ -5,6 +5,7 @@
     <% if (isTaskAvailable) { %>
       <% tasks.forEach(task => { %>
         <div class="bg-white rounded-2xl shadow p-4 border">
+          <a href="/ceo/task/<%= task._id %>">
           <h2 class="text-xl font-semibold mb-2"><%= task.title %></h2>
           <p class="text-gray-600 mb-3"><%= task.description || "No description" %></p>
           
@@ -55,6 +56,7 @@
             </ul>
           </div>
           <% } %>
+        </a>
         </div>
       <% }) %>
     <% } else { %>
@@ -62,15 +64,3 @@
     <% } %>
   </div>
 </div>
-
-<% if (!isTaskAvailable) { %>
-  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
-    <div class="bg-white p-6 rounded-2xl shadow-lg text-center max-w-sm">
-      <h2 class="text-xl font-bold text-green-600">No Task Available</h2>
-      <button onclick="this.parentElement.parentElement.remove()" 
-        class="mt-4 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">
-        Close
-      </button>
-    </div>
-  </div>
-<% } %>

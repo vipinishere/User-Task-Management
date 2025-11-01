@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 const mongoose = require("mongoose");
-const { imageUrlToPublicId } = require("../utils/imagePublicId.utils");
+const { imageUrlToPublicId } = require("../utils/imagePublicId");
 
 // utility functions
 
@@ -148,7 +148,12 @@ const getSingleTask = async (req, res) => {
   const taskId = req.params.id;
 
   try {
-    const task = await taskModel.findById(taskId);
+    const task = await taskModel
+      .findById(taskId)
+      .populate({ path: "assignedTo", select: "name email role" })
+      .populate({ path: "createdBy", select: "name email role" })
+      .lean();
+    console.log("Single Task:", task);
     if (!task) {
       return res
         .status(404)
@@ -347,7 +352,7 @@ const deleteSingleTask = async (req, res, next) => {
       );
     }
 
-    if (task.attachments[0]) {
+    if (task.attachments.length > 0) {
       const url = task.attachments[0].fileUrl;
 
       const publicId = imageUrlToPublicId(url);
@@ -370,6 +375,47 @@ const deleteSingleTask = async (req, res, next) => {
       .status(500)
       .redirect(
         `/admin/user/${userId}?status=error&message=${encodeURIComponent(
+          err.message
+        )}`
+      );
+  }
+};
+
+const deleteSingleTaskforTasks = async (req, res, next) => {
+  try {
+    const taskId = req.params.id;
+
+    const task = await taskModel.findById(taskId);
+    if (!task) {
+      const errorMsg = "The requested action failed due to validation issues.";
+      res.redirect(
+        `/admin/tasks?status=error&message=${encodeURIComponent(errorMsg)}`
+      );
+    }
+
+    if (task.attachments.length > 0) {
+      const url = task.attachments[0].fileUrl;
+
+      const publicId = imageUrlToPublicId(url);
+
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    await task.deleteOne(); // or Task.findByIdAndDelete(id)
+
+    return res
+      .status(200)
+      .redirect(
+        `/admin/tasks?status=success&message=${encodeURIComponent(
+          "Task Deleted Successfully"
+        )}`
+      );
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .redirect(
+        `/admin/task/${taskId}?status=error&message=${encodeURIComponent(
           err.message
         )}`
       );
@@ -448,5 +494,6 @@ module.exports = {
   getCreateTaskHandler,
   postCreateTaskHandler,
   deleteSingleTask,
+  deleteSingleTaskforTasks,
   deleteUserAndTasks,
 };

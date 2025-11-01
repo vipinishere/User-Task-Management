@@ -11,6 +11,8 @@ const {
   getAllTask,
   deleteSingleTask,
   deleteUserAndTasks,
+  getSingleTask,
+  deleteSingleTaskforTasks,
 } = require("../controllers/ceoController");
 const { authCeo } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -37,6 +39,7 @@ router.route("/user/:id/delete").post(deleteUserAndTasks);
 router.route("/user/:id/task/:taskId/delete").post(deleteSingleTask);
 
 router.route("/tasks").get(getAllTask);
-router.route("/task/:id/delete").post(deleteSingleTask);
+router.route("/task/:id").get(getSingleTask);
+router.route("/task/:id/delete").post(deleteSingleTaskforTasks);
 
 module.exports = router;

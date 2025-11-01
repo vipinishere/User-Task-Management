@@ -4,6 +4,8 @@ const ceoModel = require("../models/ceoModel");
 const userModel = require("../models/userModel");
 const taskModel = require("../models/taskModel");
 const { default: mongoose } = require("mongoose");
+const { imageUrlToPublicId } = require("../utils/imagePublicId");
+const cloudinary = require("cloudinary").v2;
 
 const getCeoDashboard = async (req, res) => {
   const user = req.user;
@@ -308,12 +310,20 @@ const getAllUser = async (req, res) => {
   }
 };
 
-const getSingleUser = async (req, res, next) => {
+const getSingleUser = async (req, res) => {
   try {
     const userId = req.params.id;
+    const pathFor = req.originalUrl.split("/")[2];
     const user = await userModel.findById(userId).lean();
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .redirect(
+          `/ceo/${pathFor}s?status=error&message=${encodeURIComponent(
+            "User not found"
+          )}`
+        );
 
     // fetch tasks where user is either creator or assigned to
     const tasks = await taskModel
@@ -321,11 +331,6 @@ const getSingleUser = async (req, res, next) => {
         $or: [{ createdBy: userId }, { assignedTo: userId }],
       })
       .lean();
-
-    if (!user) {
-      return next({ err: "while fatching user data" });
-    }
-    console.log(user);
 
     return res.render("./ceo/singleUser", {
       tasks,
@@ -335,11 +340,17 @@ const getSingleUser = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
-    return next({ err: "while fatching user data" });
+    return res
+      .status(500)
+      .redirect(
+        `/ceo/${pathFor}s?status=error&message=${encodeURIComponent(
+          "while fatching user"
+        )}`
+      );
   }
 };
 
-const getAllTask = async (req, res, next) => {
+const getAllTask = async (req, res) => {
   try {
     const allTasks = await taskModel
       .find({}, "-__v")
@@ -364,20 +375,31 @@ const getAllTask = async (req, res, next) => {
     }
   } catch (err) {
     console.log(err);
+    return res
+      .status(500)
+      .redirect(
+        `/ceo?status=error&message=${encodeURIComponent(
+          "while fatching tasks"
+        )}`
+      );
   }
 };
 
-const deleteSingleTask = async (req, res, next) => {
+const deleteSingleTask = async (req, res) => {
   try {
     const userId = req.params.id;
     const taskId = req.params.taskId;
-
+    console.log("userId:", userId, "taskId:", taskId);
     const task = await taskModel.findById(taskId);
     if (!task) {
       const errorMsg = "The requested action failed due to validation issues.";
-      res.redirect(`/ceo/user/${userId}?error=${encodeURIComponent(errorMsg)}`);
+      res.redirect(
+        `/ceo/user/${userId}?status=error&message=${encodeURIComponent(
+          errorMsg
+        )}`
+      );
     }
-    if (task.attachments[0].fileUrl) {
+    if (task.attachments.length > 0) {
       const publicId = imageUrlToPublicId(task.attachments[0].fileUrl);
       await cloudinary.uploader.destroy(publicId);
     }
@@ -395,12 +417,84 @@ const deleteSingleTask = async (req, res, next) => {
     return res
       .status(500)
       .redirect(
-        `/ceo/user/${userId}?error=${encodeURIComponent("while deleting task")}`
+        `/ceo/user/${userId}?status=error&message=${encodeURIComponent(
+          "while deleting task"
+        )}`
       );
   }
 };
 
-const deleteUserAndTasks = async (req, res, next) => {
+const getSingleTask = async (req, res) => {
+  const taskId = req.params.id;
+  try {
+    const task = await taskModel
+      .findById(taskId)
+      .populate({ path: "createdBy", select: "name email role" })
+      .populate({ path: "assignedTo", select: "name email role" })
+      .lean();
+    console.log("Single Task:", task);
+    if (!task) {
+      return res
+        .status(404)
+        .redirect(
+          `/ceo/tasks?status=error&message=${encodeURIComponent(
+            "Task not found"
+          )}`
+        );
+    }
+    return res.status(200).render("./admin/singleTaskPage", {
+      title: "CEO | Single Task",
+      user: req.user,
+      task,
+    });
+  } catch (err) {
+    console.error("Error fetching single task:", err);
+    return res
+      .status(500)
+      .redirect(
+        `/ceo/tasks?status=error&message=${encodeURIComponent(
+          "Server error : Something went wrong"
+        )}`
+      );
+  }
+};
+
+const deleteSingleTaskforTasks = async (req, res) => {
+  const taskId = req.params.id;
+  try {
+    const task = await taskModel.findById(taskId);
+    if (!task) {
+      const errorMsg = "The requested action failed due to validation issues.";
+      res.redirect(
+        `/ceo/tasks?status=error&message=${encodeURIComponent(errorMsg)}`
+      );
+    }
+    if (task.attachments.length > 0) {
+      const publicId = imageUrlToPublicId(task.attachments[0].fileUrl);
+      await cloudinary.uploader.destroy(publicId);
+    }
+    await task.deleteOne(); // or Task.findByIdAndDelete(id)
+
+    return res
+      .status(200)
+      .redirect(
+        `/ceo/tasks?status=success&message=${encodeURIComponent(
+          "Task deleted successfully"
+        )}  `
+      );
+  } catch (err) {
+    console.error(" Error deleting task:", err);
+    return res
+      .status(500)
+      .redirect(
+        `/ceo/task/${taskId}?status=error&message=${encodeURIComponent(
+          "something went wrong"
+        )}`
+      );
+  }
+};
+
+const deleteUserAndTasks = async (req, res) => {
   const userId = req.params.id;
   const session = await mongoose.startSession();
 
@@ -412,7 +506,13 @@ const deleteUserAndTasks = async (req, res, next) => {
     if (!user) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).redirect(`/ceo/user/${userId}`);
+      return res
+        .status(404)
+        .redirect(
+          `/ceo/user/${userId}?status=error&message=${encodeURIComponent(
+            "User not found"
+          )}`
+        );
     }
 
     // Delete tasks created by or assigned to the user
@@ -442,13 +542,23 @@ const deleteUserAndTasks = async (req, res, next) => {
     await session.commitTransaction();
     await session.endSession();
 
-    return res
-      .status(200)
-      .redirect(
-        `/ceo/users?status=success&message=${encodeURIComponent(
-          "User and associated tasks deleted successfully"
-        )}`
-      );
+    if (user.role === "admin") {
+      return res
+        .status(200)
+        .redirect(
+          `/ceo/admins?status=success&message=${encodeURIComponent(
+            "Admin and associated tasks deleted successfully"
+          )}`
+        );
+    } else {
+      return res
+        .status(200)
+        .redirect(
+          `/ceo/users?status=success&message=${encodeURIComponent(
+            "User and associated tasks deleted successfully"
+          )}`
+        );
+    }
   } catch (err) {
     await session.abortTransaction().catch(() => {});
     session.endSession();
@@ -456,7 +566,9 @@ const deleteUserAndTasks = async (req, res, next) => {
     return res
       .status(500)
       .redirect(
-        `/ceo/users?error=${encodeURIComponent("Something went wrong")}`
+        `/ceo/users?status=error&message=${encodeURIComponent(
+          "Something went wrong"
+        )}`
       );
   } finally {
     await session.endSession();
@@ -477,4 +589,6 @@ module.exports = {
   ceoLogoutHandler,
   deleteSingleTask,
   deleteUserAndTasks,
+  getSingleTask,
+  deleteSingleTaskforTasks,
 };

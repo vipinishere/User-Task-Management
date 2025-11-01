@@ -27,6 +27,7 @@ const {
   deleteSingleTask,
   deleteUserAndTasks,
   getSingleTask,
+  deleteSingleTaskforTasks,
 } = require("../controllers/adminController");
 
 const { authAdmin } = require("../middlewares/authMiddleware");
@@ -47,5 +48,6 @@ router.route("/user/:id/delete").post(deleteUserAndTasks);
 router.route("/user/:id/task/:taskId/delete").post(deleteSingleTask);
 
 router.route("/task/:id").get(getSingleTask);
+router.route("/task/:id/delete").post(deleteSingleTaskforTasks);
 
 module.exports = router;
