@@ -1,0 +1,118 @@
+<div class="bg-gray-100 flex justify-center py-10">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg">
+      <h2 class="text-2xl font-bold text-gray-700 mb-6 text-center">Edit Task</h2>
+
+      <form action="/<%= user.role %>/task/<%= task._id %>/edit" method="POST" enctype="multipart/form-data" class="space-y-5">
+        
+        <!-- Title -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Title</label>
+          <input
+            type="text"
+            name="title"
+            value="<%= task.title %>"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 outline-none"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Description</label>
+          <textarea
+            name="description"
+            rows="4"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 outline-none"
+          ><%= task.description %></textarea>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Status</label>
+          <select
+            name="status"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 outline-none"
+            required
+          >
+            <option value="pending" <%= task.status === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="in-progress" <%= task.status === 'in-progress' ? 'selected' : '' %>>In Progress</option>
+            <option value="completed" <%= task.status === 'completed' ? 'selected' : '' %>>Completed</option>
+          </select>
+        </div>
+
+        <!-- Priority -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Priority</label>
+          <select
+            name="priority"
+            class="w-full border border-gray-300
+            rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 outline-none"
+            required
+          >
+            <option value="low" <%= task.priority === 'low' ? 'selected' : '' %>>Low</option>
+            <option value="medium" <%= task.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+            <option value="high" <%= task.priority === 'high' ? 'selected' : '' %>>High</option>
+          </select>
+        </div>
+
+        <!-- Deadline -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Deadline</label>
+          <input
+            type="date"
+            name="deadline"
+            value="<%= task.deadline.toISOString().split('T')[0] %>"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 outline-none"
+            required
+          />
+        </div>
+
+        <!-- Assigned To -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Assign To</label>
+          <input
+            type="text"
+            id="userInput"
+            name="assignedToName"
+            value="<%= task.assignedTo.name %>"
+            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-400 outline-none"
+            required
+            onkeyup="searchUser()"
+            autocomplete="off"
+            onfocus="this.select()"
+          />
+          <input 
+            type="text"
+            id="userId"
+            name="assignedToId"
+            value="<%= task.assignedTo._id %>"
+            hidden
+            /
+          >
+          <ul id="userList"></ul>
+        </div>
+
+        <!-- Attachment -->
+        <div>
+          <label class="block text-gray-600 font-medium mb-2">Attachment</label>
+          <% if (task.attachment) { %>
+            <p class="mb-2 text-sm text-green-700">
+              Current file: <a href="/uploads/<%= task.attachment %>" target="_blank" class="text-indigo-600 underline"><%= task.attachment %></a>
+            </p>
+          <% } %>
+          <input type="file" name="attachment" class="w-full border border-gray-300 rounded-lg p-2" />
+        </div>
+
+        <!-- Submit -->
+        <div class="text-center">
+          <button
+            type="submit"
+            class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            Update Task
+          </button>
+        </div>
+
+      </form>
+  </div>
+</div>

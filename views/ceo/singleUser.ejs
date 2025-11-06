@@ -23,10 +23,12 @@
     <div
       class="flex justify-between items-center bg-white p-3 mb-2 rounded-lg shadow-sm"
     >
+      <a href="/<%= user.role %>/task/<%= task._id %>">
       <div>
         <h4 class="font-semibold text-gray-700"><%= task.title %></h4>
         <p class="text-xs text-gray-500"><%= task.status %></p>
       </div>
+      </a>
       <form
         action="/<%= user.role %>/user/<%= singleUser._id %>/task/<%= task._id %>/delete"
         method="POST"

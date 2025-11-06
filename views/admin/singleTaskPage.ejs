@@ -4,6 +4,22 @@
         <h1 class="text-3xl font-extrabold text-gray-900" id="taskTitle">
             <%= task.title %>
         </h1>
+        <a href="/<%= user.role %>/task/<%= task._id %>/edit">
+        <button type="submit"
+            class="delete-btn px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300 shadow-md flex items-center space-x-2">
+            <!-- Edit (pencil) icon - scalable, accessible, styleable -->
+            <svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="24" height="24"
+                role="img" aria-label="Edit"
+                fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21v-3.75L14.06 6.19a2 2 0 0 1 2.83 0l1.92 1.92a2 2 0 0 1 0 2.83L7.75 21H3z"/>
+            <path d="M14.5 5.5l4 4"/>
+            </svg>
+            <span>Edit Task</span>
+        </button>
+        </a>
+
         <form action="/<%= user.role %>/task/<%= task._id %>/delete" onsubmit="confirmDelete(event)" method="post">
         <button type="submit"
             class="delete-btn px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300 shadow-md flex items-center space-x-2">

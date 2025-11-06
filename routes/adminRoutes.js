@@ -28,6 +28,8 @@ const {
   deleteUserAndTasks,
   getSingleTask,
   deleteSingleTaskforTasks,
+  getEditSingleTask,
+  editSingleTask,
 } = require("../controllers/adminController");
 
 const { authAdmin } = require("../middlewares/authMiddleware");
@@ -48,6 +50,10 @@ router.route("/user/:id/delete").post(deleteUserAndTasks);
 router.route("/user/:id/task/:taskId/delete").post(deleteSingleTask);
 
 router.route("/task/:id").get(getSingleTask);
+router
+  .route("/task/:id/edit")
+  .get(getEditSingleTask)
+  .post(upload.single("attachment"), editSingleTask);
 router.route("/task/:id/delete").post(deleteSingleTaskforTasks);
 
 module.exports = router;

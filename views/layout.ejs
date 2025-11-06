@@ -25,11 +25,19 @@
       class="bg-white p-4 fixed w-full z-10 top-0 shadow-md flex justify-between items-center"
     >
       <div class="flex items-center space-x-4">
+        <% if (user.profileImage) { %>
         <img
-          src=<%= "https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500" || null %>
+          src="<%= user.profileImage %>"
           alt="Profile"
           class="w-10 h-10 rounded-full border-2 border-gray-300"
         />
+        <% } else { %>
+          <img
+            src="https://res.cloudinary.com/dyj4yepnw/image/upload/v1762470907/user-task-management/2289_SkVNQSBGQU1PIDEwMjgtMTIy_kj1ezl.jpg"
+            alt="Profile"
+            class="w-10 h-10 rounded-full border-2 border-gray-300"
+          />
+          <% } %>
         <span class="text-lg font-semibold text-gray-800 hidden sm:block">
           <% if (user.fullName) { %>
             <%= user.fullName %>

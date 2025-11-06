@@ -482,6 +482,172 @@ const getLogoutHandler = (req, res) => {
   return res.redirect("/admin/login");
 };
 
+const getEditSingleTask = async (req, res) => {
+  const taskId = req.params.id;
+  // const path = req.originalUrl;
+  // console.log(path);
+  try {
+    const task = await taskModel
+      .findById(taskId)
+      .populate({ path: "createdBy", select: "name email role" })
+      .populate({ path: "assignedTo", select: "name email role" })
+      .lean();
+    // console.log("Single Task for Edit:", task);
+    if (!task) {
+      return res
+        .status(404)
+        .redirect(
+          `/admin/tasks?status=error&message=${encodeURIComponent(
+            "Task not found"
+          )}`
+        );
+    }
+    return res.status(200).render("./editSingleTask", {
+      title: "Admin | Edit Single Task",
+      user: req.user,
+      task,
+    });
+  } catch (err) {
+    console.error("Error fetching single task for edit:", err);
+    return res
+      .status(500)
+      .redirect(
+        `/admin/tasks?status=error&message=${encodeURIComponent(
+          "Server error : Something went wrong"
+        )}`
+      );
+  }
+};
+
+const editSingleTask = async (req, res) => {
+  const taskId = req.params.id;
+  const { title, description, status, priority, deadline, assignedToId } =
+    req.body;
+
+  try {
+    if (
+      !title ||
+      !description ||
+      !status ||
+      !priority ||
+      !deadline ||
+      !assignedToId
+    ) {
+      if (req.file) {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      }
+
+      return res
+        .status(400)
+        .redirect(
+          `/admin/task/${taskId}?status=error&message=${encodeURIComponent(
+            "All fields are required"
+          )}`
+        );
+    }
+    const task = await taskModel.findById(taskId);
+
+    if (!task) {
+      if (req.file) {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      }
+      return res
+        .status(404)
+        .redirect(
+          `/admin/tasks?status=error&message=${encodeURIComponent(
+            "Task not found"
+          )}`
+        );
+    }
+
+    // Update task fields
+    if (
+      task.title === title &&
+      task.description === description &&
+      task.status === status &&
+      task.priority === priority &&
+      task.deadline.toISOString() === new Date(deadline).toISOString() &&
+      task.assignedTo.toString() === assignedToId &&
+      !req.file
+    ) {
+      return res
+        .status(200)
+        .redirect(
+          `/admin/task/${taskId}?status=success&message=${encodeURIComponent(
+            "No changes detected"
+          )}`
+        );
+    }
+
+    if (!task.title === title) {
+      task.title = title;
+    }
+
+    if (!task.description === description) {
+      task.description = description;
+    }
+
+    if (!task.status === status) {
+      task.status = status;
+    }
+
+    if (!task.priority === priority) {
+      task.priority = priority;
+    }
+
+    if (task.deadline.toISOString() !== new Date(deadline).toISOString()) {
+      task.deadline = deadline;
+    }
+
+    if (task.assignedTo.toString() !== assignedToId) {
+      task.assignedTo = assignedToId;
+    }
+
+    // Handle attachment update if a new file is uploaded
+    if (req.file) {
+      // Delete old attachment from Cloudinary if it exists
+      if (task.attachments.length > 0) {
+        const oldPublicId = imageUrlToPublicId(task.attachments[0].fileUrl);
+        await cloudinary.uploader.destroy(oldPublicId);
+      }
+
+      const uploadedFileUrl = await cloudinary.uploader.upload(req.file.path, {
+        folder: "user-task-management",
+        resource_type: "auto",
+      });
+
+      // Add new attachment
+      const newAttachment = {
+        fileUrl: uploadedFileUrl.secure_url,
+        fileName: uploadedFileUrl.original_filename,
+      };
+      task.attachments = [newAttachment]; // Assuming only one attachment is allowed
+    }
+
+    await task.save();
+
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    return res
+      .status(200)
+      .redirect(
+        `/admin/task/${taskId}?status=success&message=${encodeURIComponent(
+          "Task updated successfully"
+        )}`
+      );
+  } catch (err) {
+    console.error("Error updating task:", err);
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res
+      .status(500)
+      .redirect(
+        `/admin/task/${taskId}?status=error&message=${encodeURIComponent(
+          "Something went wrong while updating the task"
+        )}`
+      );
+  }
+};
+
 module.exports = {
   getLoginPageHandler,
   postLoginPageHandler,
@@ -496,4 +662,6 @@ module.exports = {
   deleteSingleTask,
   deleteSingleTaskforTasks,
   deleteUserAndTasks,
+  getEditSingleTask,
+  editSingleTask,
 };

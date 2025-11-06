@@ -6,9 +6,6 @@ const morgan = require("morgan");
 const cloudinary = require("cloudinary").v2;
 const connectDB = require("./config/db");
 
-// Connect to Database
-connectDB();
-
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -107,4 +104,5 @@ connectDB()
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
   });

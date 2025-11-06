@@ -1,7 +1,6 @@
 async function searchUser() {
-  console.log("hello");
   const name = document.getElementById("userInput").value;
-  if (name.length < 2) return; // min 2 letters
+  if (name.length < 1) return; // min 2 letters
 
   const res = await fetch(`/user/search?name=${name}`);
   const users = await res.json();
