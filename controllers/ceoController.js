@@ -5,6 +5,7 @@ const userModel = require("../models/userModel");
 const taskModel = require("../models/taskModel");
 const { default: mongoose } = require("mongoose");
 const { imageUrlToPublicId } = require("../utils/imagePublicId");
+const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 
 const getCeoDashboard = async (req, res) => {
@@ -714,9 +715,9 @@ const editSingleTask = async (req, res) => {
         fileName: uploadedFileUrl.original_filename,
       };
       task.attachments = [newAttachment]; // Assuming only one attachment is allowed
-    }
 
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    }
 
     await task.save();
 
@@ -729,7 +730,9 @@ const editSingleTask = async (req, res) => {
       );
   } catch (err) {
     console.error("Error updating task:", err);
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    if (req.file) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    }
     return res
       .status(500)
       .redirect(
