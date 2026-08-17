@@ -1,6 +1,7 @@
 const userModel = require("../models/userModel");
 const taskModel = require("../models/taskModel");
 const bcrypt = require("bcrypt");
+const cloudinary = require("cloudinary").v2;
 const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
 
@@ -156,7 +157,7 @@ const getUserProfile = async (req, res) => {
       }
       return acc;
     },
-    [[], []]
+    [[], []],
   );
   res.render("./user/dashboard", {
     user,
